@@ -3,3 +3,12 @@ __pycache__/
 *.pyc
 outputs/
 .env
+data/ucdp/
+data/imf_imts/
+data/comtrade/
+data/gdelt/
+data/processed/
+old/
+.env
+.DS_Store
+**/.DS_Store
