@@ -2,7 +2,7 @@
 Build a complete, regular dyad-week panel from the raw GDELT-style export and
 add a forward-looking (13-week-ahead) target column.
 
-Input:  raw data/job_a6b5iGxuj2kTkz-H8nzP967TZiel.csv
+Input:  raw data/bq-results-20260927-170349-1790530001905.csv
 Output: raw data/panel_with_target.csv
 """
 

@@ -1,5 +1,8 @@
 google-cloud-bigquery
 db-dtypes
 pandas
+pyarrow
 scikit-learn
 tensorflow
+matplotlib
+lightgbm
