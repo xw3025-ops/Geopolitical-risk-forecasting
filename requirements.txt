@@ -1,8 +1,19 @@
-google-cloud-bigquery
-db-dtypes
-pandas
-pyarrow
-scikit-learn
-tensorflow
-matplotlib
+# Training, benchmarks and local pipeline runs. The Cloud Function has its
+# own pinned list in cloud_function/requirements.txt.
+# Pinned versions: what the release v2.0 transformers were trained and
+# verified with (their saved scalers are pickled scikit-learn objects).
+tensorflow==2.21.0
+keras==3.15.1
+numpy==2.5.4
+pandas==3.0.6
+scikit-learn==1.9.1
+joblib==1.6.0
+pyarrow==26.0.0
+# LightGBM risk pipeline (train_risk_gbm.py / predict_risk.py) and plots
 lightgbm
+matplotlib
+# BigQuery / GCS access (build_*panel*.py, run_pipeline.py --source bigquery)
+google-cloud-bigquery
+google-cloud-bigquery-storage
+google-cloud-storage
+db-dtypes

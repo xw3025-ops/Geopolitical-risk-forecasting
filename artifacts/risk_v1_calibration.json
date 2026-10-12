@@ -1,0 +1,24 @@
+{
+  "created_utc": "2026-10-11T23:25:04+00:00",
+  "event": "country activity-weighted mean goldstein over the next 13 weeks >= 0.5 below its 52-week normal",
+  "fit_weeks": "2023-02-06..2026-06-22 (held-out only)",
+  "fit_rows": 3280,
+  "event_rate": 0.15579268292682927,
+  "likelihood": {
+    "intercept": -1.8940964708496373,
+    "coef_forecast_change": -1.824437570829042,
+    "coef_recent_change": -1.3181227264181656
+  },
+  "likelihood_bands": [
+    0.1,
+    0.2,
+    0.35,
+    0.5
+  ],
+  "hostility_thresholds": [
+    -1.7939664750568796,
+    -1.2776159362462276,
+    -0.8298156673639046,
+    -0.07411303782500746
+  ]
+}

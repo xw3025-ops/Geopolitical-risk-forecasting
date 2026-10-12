@@ -1,0 +1,16 @@
+# Pinned to the versions release v2.0 was trained and verified with
+# (the saved scalers/encoders are pickled scikit-learn objects).
+functions-framework==3.*
+tensorflow==2.21.0
+keras==3.15.1
+h5py==3.14.0
+numpy==2.5.4
+pandas==3.0.6
+scikit-learn==1.9.1
+joblib==1.6.0
+pyarrow==26.0.0
+google-cloud-bigquery==3.45.2
+google-cloud-bigquery-storage==2.41.0
+google-cloud-storage==3.15.0
+db-dtypes==1.7.1
+requests==2.34.2
