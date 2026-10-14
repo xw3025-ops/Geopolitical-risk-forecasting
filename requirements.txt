@@ -17,3 +17,10 @@ google-cloud-bigquery
 google-cloud-bigquery-storage
 google-cloud-storage
 db-dtypes
+# optional, local only:
+#   GPU training on Windows (Keras on PyTorch, KERAS_BACKEND=torch):
+#     pip install torch --index-url https://download.pytorch.org/whl/cu128
+#   news-text experiment (fetch_guardian.py, news_features.py): sentence-transformers
+#   API keys from the git-ignored .env file: python-dotenv
+#   paper figures and document (paper/): matplotlib, python-docx
+python-dotenv

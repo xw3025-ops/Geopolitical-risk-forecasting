@@ -36,6 +36,24 @@ def local_frame(as_of_week, n_weeks=lp.HISTORY_WEEKS):
     return df[(df.week_start >= first) & (df.week_start <= pd.Timestamp(as_of_week))]
 
 
+WIDE = "raw data/bq_panel_with_target.parquet"  # local copy of table 1.1 incl. MENA<->world dyads
+
+
+def local_external(as_of_week, pairs, n_weeks=lp.HISTORY_WEEKS):
+    """The external dyads' rows for the replay window, from the same local
+    pull the v2.1 model was trained on - what pull_external would return."""
+    from honest_common import COUNT_COLS
+    cols = ["week_start", "Actor1CountryCode", "Actor2CountryCode", "dyad_scope", "goldstein_mean",
+            "total_count"] + COUNT_COLS
+    e = pd.read_parquet(WIDE, columns=cols)
+    e = e[e.dyad_scope == "EXTERNAL_LINK"].drop(columns="dyad_scope")
+    e["week_start"] = pd.to_datetime(e["week_start"])
+    first = pd.Timestamp(as_of_week) - pd.Timedelta(weeks=n_weeks - 1)
+    keys = {f"{a}|{b}" for a, b in pairs}
+    e = e[(e.week_start >= first) & (e.week_start <= pd.Timestamp(as_of_week))]
+    return e[(e.Actor1CountryCode + "|" + e.Actor2CountryCode).isin(keys)]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", choices=["bigquery", "local"], default="bigquery")
@@ -48,20 +66,25 @@ def main():
     if args.download:
         model_dir = lp.download_release(BUCKET, os.path.join("models", lp.MODEL_VERSION))
 
+    models = lp.load_models(model_dir)
+    pairs = models["goldstein"][0].get("external_dyads", [])
     if args.source == "bigquery":
         from google.cloud import bigquery
+        bq = bigquery.Client(project=PROJECT)
         as_of = lp.last_complete_week()
         print(f"Pulling {lp.HISTORY_WEEKS} complete weeks ending {as_of} from {lp.SOURCE_TABLE}...")
-        df = lp.pull_panel(bigquery.Client(project=PROJECT), as_of)
+        df = lp.pull_panel(bq, as_of)
+        ext = lp.pull_external(bq, as_of, pairs) if pairs else None
     else:
         weeks = pd.to_datetime(pd.read_parquet(PANEL_PATH, columns=["week_start"]).week_start)
         as_of = pd.Timestamp(args.as_of or weeks.max()).date()
         df = local_frame(as_of)
+        ext = local_external(as_of, pairs) if pairs else None
 
     check = lp.check_panel(df, as_of)
     if check["warning"]:
         print("WARNING:", check["warning"])
-    results = lp.predict(df, lp.load_models(model_dir))
+    results = lp.predict(df, models, ext)
 
     os.makedirs("predictions", exist_ok=True)
     out = f"predictions/forecast_{lp.MODEL_VERSION}_{as_of}.csv"

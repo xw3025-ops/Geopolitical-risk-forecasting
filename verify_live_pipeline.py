@@ -19,7 +19,7 @@ import pandas as pd
 
 import live_pipeline as lp
 from honest_common import load_panel
-from run_pipeline import local_frame
+from run_pipeline import local_external, local_frame
 
 
 def main():
@@ -30,14 +30,16 @@ def main():
 
     df = local_frame(as_of)
     print("panel check:", lp.check_panel(df, as_of.date()))
-    live = lp.predict(df, lp.load_models("."))
+    models = lp.load_models(".")
+    pairs = models["goldstein"][0].get("external_dyads", [])
+    live = lp.predict(df, models, local_external(as_of.date(), pairs) if pairs else None)
     live = live.set_index(["actor1", "actor2"])
 
     weeks = load_panel().get("weeks")
     t = weeks.get_loc(as_of)
     ok = True
     for name, path, key, col in [
-        ("goldstein", "artifacts/goldstein_v2.0_test_predictions.npz", "pred", "goldstein_forecast_next13w"),
+        ("goldstein", "artifacts/goldstein_v2.1_test_predictions.npz", "pred", "goldstein_forecast_next13w"),
         ("direction", "artifacts/direction_v2.0_test_predictions.npz", "prob", "escalation_probability_next4w"),
     ]:
         z = np.load(path, allow_pickle=True)

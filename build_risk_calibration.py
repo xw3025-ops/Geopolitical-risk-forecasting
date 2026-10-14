@@ -1,7 +1,7 @@
 """
 Calibrate the model-based parts of the country risk index (risk_index.py)
 and record the evidence behind them. Uses only HELD-OUT predictions of the
-release v2.0 models (the validation and test weeks they were never trained
+release models (goldstein v2.1, direction v2.0) (the validation and test weeks they were never trained
 on), saved by experiment_goldstein.py / release_v2.0_direction.py.
 
 1. Evidence: which signal should drive LIKELIHOOD? Each candidate is
@@ -35,7 +35,8 @@ from risk_index import (CALIBRATION_FILE, LIKELIHOOD_BANDS, aggregate, country_m
                         dyad_context, level_from_thresholds)
 
 DELTA = 0.5
-GOLDSTEIN_RUNS = "artifacts/experiments/lb13_res52_long_do0.2_lr0.0003_plat_s*.npz"  # the release v2.0 seeds
+GOLDSTEIN_PREDS = {"va": "artifacts/goldstein_v2.1_val_predictions.npz",   # release v2.1 ensemble,
+                   "te": "artifacts/goldstein_v2.1_test_predictions.npz"}  # held-out weeks only
 DIRECTION_RUNS = "artifacts/experiments/direction_v2.0_s*.npz"
 
 
@@ -49,7 +50,6 @@ def main():
     p = load_panel()
     ctx = dyad_context(p)
     M = country_matrix(p["a1"], p["a2"])
-    z = np.load(sorted(glob.glob(GOLDSTEIN_RUNS))[0])
     _, d_va, d_te = split_by_dates(p["weeks"], p["target4"][0], DIRECTION_VAL_START, DIRECTION_TEST_START, 4)
 
     def build(week_idx, forecast, esc=None):
@@ -63,7 +63,7 @@ def main():
             out["esc"] = aggregate(esc, sl(ctx["weight"]), M).ravel()
         return out
 
-    g = {s: (z[f"{s}_week_idx"], ensemble(GOLDSTEIN_RUNS, f"{s}_pred")) for s in ("va", "te")}
+    g = {s: (np.load(f)["week_idx"], np.load(f)["pred"]) for s, f in GOLDSTEIN_PREDS.items()}
     d = {"va": (d_va, ensemble(DIRECTION_RUNS, "va_prob")), "te": (d_te, ensemble(DIRECTION_RUNS, "te_prob"))}
 
     # ---- 1. evidence (overlap of both models' held-out weeks, so all candidates see the same rows)

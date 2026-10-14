@@ -84,6 +84,8 @@ def upload_csv(df, prefix, as_of):
 
 
 def run_risk(bq, df, results, as_of):
+    if not (os.environ.get("ACLED_EMAIL") and os.environ.get("ACLED_PASSWORD")):
+        return "risk index skipped: ACLED secrets not configured in Secret Manager"
     calib = ri.load_calibration(MODEL_DIR)
     start = as_of - timedelta(weeks=ACLED_REFRESH_WEEKS - 1)
     recent, max_date = ri.acled_country_weeks(os.environ["ACLED_EMAIL"], os.environ["ACLED_PASSWORD"],
@@ -116,13 +118,15 @@ def run_pipeline(request):
     n_rows, billed = refresh_gdelt_table(bq, as_of)
     print(f"Rebuilt {lp.SOURCE_TABLE} through week {as_of}: {n_rows} rows, {billed / 1e9:.0f} GB billed")
 
-    df = lp.pull_panel(bq, as_of)
-    check = lp.check_panel(df, as_of)
-    print(f"Pulled {df.week_start.nunique()} complete weeks ending {as_of}: {json.dumps(check)}")
-
     if _models is None:
         _models = lp.load_models(lp.download_release(BUCKET, MODEL_DIR, MODEL_VERSION))
-    results = lp.predict(df, _models)
+    df = lp.pull_panel(bq, as_of)
+    check = lp.check_panel(df, as_of)
+    pairs = _models["goldstein"][0].get("external_dyads", [])
+    ext = lp.pull_external(bq, as_of, pairs) if pairs else None
+    print(f"Pulled {df.week_start.nunique()} complete weeks ending {as_of} (+{len(pairs)} external dyads): "
+          f"{json.dumps(check)}")
+    results = lp.predict(df, _models, ext)
     replace_week(bq, FORECASTS_TABLE, results, as_of, "model_version", MODEL_VERSION)
     upload_csv(results, "", as_of)
     msg = f"OK: {len(results)} forecasts, model {MODEL_VERSION}, as-of week {as_of}"

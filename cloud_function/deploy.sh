@@ -29,7 +29,9 @@ REGION=us-central1
 FUNCTION=run-pipeline        # the existing v1.0 function - deploying replaces it
 JOB=weekly-pipeline-run      # the existing scheduler job (was Mondays 10:00 UTC) - updated in place
 BUCKET=geopolitical-risk-forecasting-models
-VERSION=v2.0
+VERSION=v2.1                 # release folder in GCS: goldstein v2.1 + direction v2.0
+GOLDSTEIN=v2.1
+DIRECTION=v2.0
 SCHEDULE="0 6 * * 2"   # Tuesdays 06:00 UTC: >1 day after the as-of week ends, so GDELT has caught up
 
 # ---- 0. the release must still reproduce its own test predictions
@@ -38,12 +40,23 @@ SCHEDULE="0 6 * * 2"   # Tuesdays 06:00 UTC: >1 day after the as-of week ends, s
 
 # ---- 1. model files
 gcloud storage cp \
-  model_release_${VERSION}_goldstein_s*.weights.h5 \
-  model_release_${VERSION}_direction_s*.weights.h5 \
-  artifacts/goldstein_${VERSION}_preprocessing.joblib \
-  artifacts/direction_${VERSION}_preprocessing.joblib \
+  model_release_${GOLDSTEIN}_goldstein_s*.weights.h5 \
+  model_release_${DIRECTION}_direction_s*.weights.h5 \
+  artifacts/goldstein_${GOLDSTEIN}_preprocessing.joblib \
+  artifacts/direction_${DIRECTION}_preprocessing.joblib \
   artifacts/risk_v1_calibration.json \
   "gs://${BUCKET}/models/${VERSION}/" --project="$PROJECT"
+
+# ---- ACLED credentials for the risk index: attached only if they exist in Secret Manager
+# (without them the function still forecasts; its risk step reports "skipped").
+if gcloud secrets describe acled-email --project="$PROJECT" >/dev/null 2>&1 \
+   && gcloud secrets describe acled-password --project="$PROJECT" >/dev/null 2>&1; then
+  SECRETS_FLAG="--set-secrets=ACLED_EMAIL=acled-email:latest,ACLED_PASSWORD=acled-password:latest"
+  echo "ACLED secrets found - risk index enabled"
+else
+  SECRETS_FLAG="--clear-secrets"
+  echo "ACLED secrets not in Secret Manager - deploying without them (risk index will be skipped)"
+fi
 
 # ---- 2. function source
 BUILD=$(mktemp -d)
@@ -57,7 +70,7 @@ gcloud functions deploy "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGIO
   --trigger-http --no-allow-unauthenticated \
   --memory=4GiB --cpu=2 --timeout=3600s \
   --set-env-vars=MODEL_VERSION="$VERSION" \
-  --set-secrets=ACLED_EMAIL=acled-email:latest,ACLED_PASSWORD=acled-password:latest
+  $SECRETS_FLAG
 
 URL=$(gcloud functions describe "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGION" \
       --format='value(serviceConfig.uri)')

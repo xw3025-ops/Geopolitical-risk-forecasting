@@ -33,6 +33,11 @@ def main():
     ap.add_argument("--start", default="2017-12-04", help="a Monday; 3 weeks before the 2018 reference window")
     ap.add_argument("--local-only", action="store_true", help="write the parquet copy only, not BigQuery")
     args = ap.parse_args()
+    try:  # local runs: credentials from the git-ignored .env file
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
     email, password = os.environ.get("ACLED_EMAIL"), os.environ.get("ACLED_PASSWORD")
     if not email or not password:
         raise SystemExit("set ACLED_EMAIL and ACLED_PASSWORD environment variables first")
