@@ -177,18 +177,21 @@ def fig_timeline():
 # ---------------------------------------------------------------- 4. benchmark
 def fig_benchmark():
     b = S["goldstein_benchmark"]
-    rows = [("Trailing 13-week mean", b["trailing 13-week mean"]["r2"], BASE),
+    lin = json.load(open(f"{OUT}/linear_baselines.json"))
+    rows = [("Linear regression, raw weekly inputs", lin["OLS current week"]["r2"], BASE),
+            ("Trailing 13-week mean", b["trailing 13-week mean"]["r2"], BASE),
             ("v1.0 transformer recipe (re-run on corrected data)", 0.556, "#b7d3f6"),
             ("Trailing 26-week mean", b["trailing 26-week mean"]["r2"], BASE),
             ("Trailing 52-week mean", b["trailing 52-week mean"]["r2"], BASE),
-            ("Gradient boosting, 44 hand-built lag features", 0.616, ORANGE),
+            ("Gradient boosting, 44 hand-built features", 0.616, ORANGE),
+            ("Linear regression, 44 hand-built features", lin["OLS 44 history features"]["r2"], ORANGE),
             ("v2.0: regional attention (400 dyads), 5 seeds", b["transformer v2.0 (5-seed ensemble)"]["r2"], STEP_BLUE),
             ("v2.1: cross-system attention (1,959 dyads), 5 seeds", R21["benchmark"]["v2.1"]["r2"], BLUE)]
-    fig, ax = plt.subplots(figsize=(7.2, 3.0))
+    fig, ax = plt.subplots(figsize=(7.2, 3.4))
     for i, (lab, v, c) in enumerate(rows):
-        dot_row(ax, i, v, c, "{:.3f}", 0.45)
+        dot_row(ax, i, v, c, "{:.3f}", 0.30)
     ax.set_yticks(range(len(rows)), [r[0] for r in rows])
-    ax.set_xlim(0.45, 0.665)
+    ax.set_xlim(0.30, 0.67)
     ax.set_xlabel("Test R²  (mean Goldstein over the next 13 weeks; 400 dyads × 119 weeks)")
     ax.xaxis.grid(True, color=GRID, lw=0.6)
     ax.set_axisbelow(True)

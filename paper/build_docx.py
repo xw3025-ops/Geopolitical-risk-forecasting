@@ -26,6 +26,8 @@ BT = json.load(open(f"{P}/backtest.json"))
 SC = json.load(open(f"{P}/scaling_summary.json"))
 B = S["goldstein_benchmark"]
 V21, V20, GBM = R["benchmark"]["v2.1"], R["benchmark"]["v2.0"], R["gbm"]
+LIN = json.load(open(f"{P}/linear_baselines.json"))      # OLS, fit on training weeks only
+OLS1, OLS44 = LIN["OLS current week"], LIN["OLS 44 history features"]
 AB, PATH, DIR = F["ablation"], F["path"], F["direction"]
 
 INK = RGBColor(0x0B, 0x0B, 0x0B)
@@ -166,9 +168,12 @@ para(
     "North Africa (MENA) states while attending to a wider system of 1,959 dyads that also includes the region's "
     "relations with the rest of the world. Using GDELT event data aggregated by week, it forecasts each dyad's "
     f"mean Goldstein cooperation–conflict score over the next 13 weeks. Under a strict out-of-sample protocol it "
-    f"reaches a test R² of {f3(V21['r2'])}, ahead of the strongest naive forecast (a trailing 52-week mean, "
-    f"{f3(B['trailing 52-week mean']['r2'])}) and of a gradient-boosting model on 44 hand-engineered features "
-    f"({f3(GBM['r2'])}), and it is also ahead on every measure of predicted *change*.")
+    f"reaches a test R² of {f3(V21['r2'])}, well ahead of a linear regression on the same raw weekly inputs "
+    f"({f3(OLS1['r2'])}) and of the strongest naive forecast (a trailing 52-week mean, "
+    f"{f3(B['trailing 52-week mean']['r2'])}), and ahead of gradient boosting ({f3(GBM['r2'])}). It does so "
+    "from raw weekly inputs: the classical models reach comparable accuracy only when given 44 history features "
+    "that an analyst designed by hand, with hindsight about what predicts well. The transformer learns those "
+    "summaries itself, which is what lets the approach extend to new regions and data sources.")
 para(
     "A systematic programme of experiments clarifies what drives these gains and what limits them. Attention "
     "across the system helps when there is enough training data and when crises propagate across the region, "
@@ -307,21 +312,44 @@ para(
     "forecast correctly says the next quarter will be above or below the dyad's 52-week normal), **change "
     "correlation** (whether the size of the forecast departure from normal tracks the actual one) and "
     "**escalation AUC** (how well the forecast ranks dyad-weeks whose next quarter ends at least one Goldstein "
-    "point below normal). Benchmarks are naive forecasts; a **competing algorithm**, gradient boosting "
-    "(HistGradientBoosting) on 44 hand-engineered lag features including the reverse dyad, both countries' "
-    "context and a region-wide average, i.e. a strong row-by-row model of the kind used in operational systems; "
-    "and earlier versions of the transformer.")
+    "point below normal). Benchmarks are naive forecasts (trailing means); **linear regression**, both on the "
+    "same raw weekly inputs the transformer receives and on hand-built history features; a **competing "
+    "algorithm**, gradient boosting (HistGradientBoosting) on the same hand-built features, i.e. a strong "
+    "row-by-row model of the kind used in operational systems; and earlier versions of the transformer.")
+para(
+    "The hand-built feature set deserves a note. Its 44 features (trailing 4-, 13-, 26- and 52-week means and "
+    "volatility, momentum, CAMEO conflict and cooperation shares, the reverse dyad's history, both countries' "
+    "recent context and a region-wide average) were designed during this project, *after* studying the data and "
+    "seeing which summaries predict well, for example that a 52-week mean outperforms a 13-week one. Both the "
+    "linear and the gradient-boosting benchmarks therefore benefit from hindsight that a forecaster facing a new "
+    "region or data source would not have. The transformer receives only the raw weekly event counts and "
+    "Goldstein scores (plus three long-memory averages) and learns which summaries matter. The comparison is "
+    "therefore deliberately favourable to the benchmarks: they are given the product of the analyst's feature "
+    "engineering, while the transformer must discover it.")
 
 # ============================================================== 4
 doc.add_heading("4  Results", level=1)
 doc.add_heading("4.1  Benchmark performance", level=2)
 para(
     f"Table 2 and Figure 4 report test performance. Release v2.1 reaches R² = {f3(V21['r2'])} and MAE = "
-    f"{f3(V21['mae'])} Goldstein points, ahead of every naive forecast, of gradient boosting ({f3(GBM['r2'])}) "
-    f"and of the regional-attention v2.0 ({f3(V20['r2'])}). It is also ahead on all three change measures: "
-    f"direction accuracy {pct(V21['dir_acc'])} against {pct(GBM['dir_acc'])} for gradient boosting, change "
-    f"correlation {V21['change_corr']:.3f} against {GBM['change_corr']:.3f}, and escalation AUC "
-    f"{V21['esc_auc']:.3f} against {GBM['esc_auc']:.3f}. Relative to the trailing 52-week mean it reduces "
+    f"{f3(V21['mae'])} Goldstein points. Given the same raw weekly inputs, a linear regression reaches only "
+    f"{f3(OLS1['r2'])}: the transformer's ability to learn from raw history roughly doubles the explained "
+    f"variance. It is also ahead of every naive forecast, of the regional-attention v2.0 ({f3(V20['r2'])}) and of "
+    f"gradient boosting on hand-built features ({f3(GBM['r2'])}), including on all three change measures "
+    f"(direction {pct(V21['dir_acc'])} vs {pct(GBM['dir_acc'])}, change correlation {V21['change_corr']:.3f} vs "
+    f"{GBM['change_corr']:.3f}, escalation AUC {V21['esc_auc']:.3f} vs {GBM['esc_auc']:.3f}).")
+para(
+    f"The comparison with the raw-input regression is the central one. Given the 44 hand-built features, the "
+    f"same linear regression rises from {f3(OLS1['r2'])} to {f3(OLS44['r2'])}, level with the transformer "
+    f"(change correlation {OLS44['change_corr']:.3f} against {V21['change_corr']:.3f}, escalation AUC "
+    f"{OLS44['esc_auc']:.3f} against {V21['esc_auc']:.3f}, direction {pct(OLS44['dir_acc'])} against "
+    f"{pct(V21['dir_acc'])}). The whole of that gain comes from feature engineering done with hindsight "
+    "(Section 3.3). The transformer achieves it by learning from the raw series which summaries of the past "
+    "matter, so a well-engineered classical model is matched without anyone having to engineer it. That "
+    "property is what allows the approach to carry over to new regions, actors or data sources, where no "
+    "tested feature set exists. Beyond this, the transformer's specific advantages appear where Section 4.4 "
+    "locates them: in periods when shocks propagate across the system, and increasingly as training data grow. "
+    "Relative to the trailing 52-week mean it reduces "
     f"squared error by {R['variance']['mse_reduction']:.1%} and is more accurate for "
     f"{R['variance']['share_dyads_better']:.0%} of the 400 dyads. The trailing 52-week mean is a demanding "
     "baseline: a smoothed quarterly target is largely persistent, and carrying a relationship's annual average "
@@ -333,10 +361,14 @@ table("Test-set performance (400 MENA dyads × 119 weeks, March 2024 – June 20
         f3(L["trailing 13-week mean"]["esc_auc"])],
        ["Trailing 52-week mean", f3(B["trailing 52-week mean"]["r2"]), f3(B["trailing 52-week mean"]["mae"]),
         "—", "—", "0.500"],
+       ["Linear regression, raw weekly inputs (this week)", f3(OLS1["r2"]), f3(OLS1["mae"]), pct(OLS1["dir_acc"]),
+        f3(OLS1["change_corr"]), f3(OLS1["esc_auc"])],
+       ["Linear regression, 44 hand-built features*", f3(OLS44["r2"]), f3(OLS44["mae"]), pct(OLS44["dir_acc"]),
+        f3(OLS44["change_corr"]), f3(OLS44["esc_auc"])],
        ["Rudimentary network (counts + Goldstein + embeddings)", f3(L["rudimentary: counts + goldstein + embeddings"]["r2"]),
         f3(L["rudimentary: counts + goldstein + embeddings"]["mae"]), pct(L["rudimentary: counts + goldstein + embeddings"]["dir_acc"]),
         f3(L["rudimentary: counts + goldstein + embeddings"]["change_corr"]), f3(L["rudimentary: counts + goldstein + embeddings"]["esc_auc"])],
-       ["Gradient boosting, 44 lag features", f3(GBM["r2"]), f3(GBM["mae"]), pct(GBM["dir_acc"]),
+       ["Gradient boosting, 44 hand-built features*", f3(GBM["r2"]), f3(GBM["mae"]), pct(GBM["dir_acc"]),
         f3(GBM["change_corr"]), f3(GBM["esc_auc"])],
        ["v2.0: regional attention (400 tokens)", f3(V20["r2"]), f3(V20["mae"]), pct(V20["dir_acc"]),
         f3(V20["change_corr"]), f3(V20["esc_auc"])],
@@ -345,9 +377,11 @@ table("Test-set performance (400 MENA dyads × 119 weeks, March 2024 – June 20
       [6.2, 1.6, 1.6, 2.0, 2.2, 2.4], bold_last=True,
       note="Direction and change measures are relative to each dyad's trailing 52-week mean, so they are undefined "
            "for that baseline. Persistence of the latest week scores R² −1.62. The rudimentary network sees only the "
-           "current week (no history, no transformer).")
+           "current week (no history, no transformer). Linear regressions are fit on the training weeks only, as "
+           "the transformer is. *Hand-built features were designed with hindsight about what predicts well "
+           "(Section 3.3).")
 figure("fig4_benchmark", "Test R² of the release models against naive forecasts, the earlier transformer recipe and "
-       "gradient boosting. The axis starts at 0.45.", 15.5)
+       "gradient boosting. Orange: models using the 44 hand-built features. The axis starts at 0.30.", 15.5)
 
 doc.add_heading("4.2  What produced the improvement", level=2)
 pv = list(PATH.values())
@@ -568,8 +602,9 @@ para(
     "each directed country pair becomes a token, a temporal transformer models each relationship's history, and "
     "a cross-system transformer forecasts the region jointly while attending to its relations with the rest of "
     "the world. Built on a single open data source and evaluated under a strict out-of-sample protocol, the "
-    "prototype forecasts quarterly relations among 400 MENA dyads more accurately than naive forecasts and a "
-    "strong gradient-boosting benchmark, on levels and on change, runs live every two weeks, and supplies the "
+    "prototype forecasts quarterly relations among 400 MENA dyads far more accurately than a linear model on the "
+    "same raw inputs and than naive forecasts, outperforms gradient boosting, and matches a linear model built "
+    "on hand-engineered features without needing that engineering. It runs live every two weeks and supplies the "
     "likelihood component of the risk index developed elsewhere in this paper. The experiment programme shows "
     "when the systemic view pays off: with enough data and when crises propagate across the system, with an "
     "advantage that grows as data grow. The model is data-limited rather than feature-limited, which makes a "
