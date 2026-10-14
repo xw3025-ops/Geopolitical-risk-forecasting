@@ -1,0 +1,16 @@
+{
+ "between_share": 0.7005230188369751,
+ "mse_transformer": 0.8512163758277893,
+ "mse_trailing52": 0.9408084750175476,
+ "mse_reduction": 0.09522883941716964,
+ "change_corr": 0.34603910904490287,
+ "change_r2": 0.09106951951980591,
+ "share_dyads_better": 0.695,
+ "median_dyad_reduction": 0.09641551971435547,
+ "example_reduction": {
+  "ISR-PSE": -0.09835994243621826,
+  "ISR-IRN": 0.14839738607406616,
+  "SAU-YEM": -0.1864032745361328,
+  "TUR-SYR": 0.39219433069229126
+ }
+}

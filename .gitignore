@@ -9,6 +9,11 @@ data/comtrade/
 data/gdelt/
 data/processed/
 old/
-.env
 .DS_Store
 **/.DS_Store
+# release v2.0 transformer pipeline
+.venv/
+predictions/
+logs/
+artifacts/experiments/
+models/v2.0/
