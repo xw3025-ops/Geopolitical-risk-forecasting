@@ -657,6 +657,12 @@ para("**One input, with known biases.** GDELT counts track media attention as mu
      "can understate a crisis precisely when it is most severe.")
 figure("fig10_gdelt", "GDELT understates the October 2023 crisis for Israel → Palestine. (a) Weekly mean Goldstein "
        "score. (b) Shares of cooperative (CAMEO 01–09) and violent (CAMEO 18–20) events.", 15.5)
+para("**A short history from a single instrument.** GDELT 2.0 begins in 2015, so the model learns from about "
+     "eleven years in which the region went through only a handful of system-wide crises. Earlier GDELT 1.0 data "
+     "cannot simply be appended: it draws on a different set of sources and coding rules, and adding it made "
+     "forecasts worse (Section 4.3). Because the model is limited by data rather than by architecture, this "
+     "ceiling is set by the instrument, not by the method; the results reported here should be read as a lower "
+     "bound on what the approach can achieve with a longer, consistently coded record.")
 para("**Gradual shifts rather than sudden breaks.** The model anticipates gradual drifts better than abrupt "
      "breaks, and is best used as a horizon-scanning tool alongside analyst judgement on discrete crises.")
 para("**Interpretability.** Attention patterns (Section 4.5) indicate where information flows but do not "
@@ -679,6 +685,15 @@ para("**From coded events to text, at the right scale.** A pretrained sentence m
      "promising route is dyad-specific representations learned from large multi-source news corpora, with "
      "encoders fine-tuned to extract actors, event types, intensity and certainty. That also fixes the dilution "
      "problem in Figure 13 at its source, and requires GPU infrastructure beyond a single laptop.")
+para("**A longer record through in-house coding.** The largest gain is likely to come from an event-coding "
+     "pipeline of our own, applied uniformly to a news archive reaching back several decades. One instrument "
+     "across that span would turn eleven years of training data into thirty or more, with many more crises, "
+     "ceasefires and realignments to learn from, the kind of shifts the current model has seen too rarely to "
+     "anticipate (Section 5, regime shifts). Owning the coding also means controlling what is measured: actors "
+     "resolved consistently, hostile and cooperative events kept apart, and intensity recorded rather than "
+     "averaged away. Given how directly v2.2 improved with more same-instrument data, a record of that length "
+     "could change the results materially, and the model, evaluation protocol and live pipeline built here "
+     "carry over to it unchanged.")
 para("**From point forecasts to calibrated risk.** Operational use needs uncertainty: quantile outputs, seed and "
      "data ensembles as uncertainty estimates, and regular re-training. The live pipeline already re-scores the "
      "full system every two weeks from the latest complete week of GDELT data, so these extensions slot into an "
@@ -700,7 +715,8 @@ para(
     "index developed elsewhere in this paper. The experiment programme shows "
     "when the systemic view pays off: with enough data and when crises propagate across the system, with an "
     "advantage that grows as data grow. The model is data-limited rather than feature-limited, which makes a "
-    "global, same-instrument system the natural next step, and the framework built here is designed to take it.")
+    "global, same-instrument system, and a longer record coded by an in-house pipeline, the natural next steps; "
+    "the framework built here is designed to take them.")
 
 # ============================================================== references
 doc.add_heading("References", level=1)
