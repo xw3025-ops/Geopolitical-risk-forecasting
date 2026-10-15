@@ -42,6 +42,7 @@ plt.rcParams.update({
 S = json.load(open(f"{OUT}/stats.json"))
 V = json.load(open(f"{OUT}/variance_stats.json"))
 R21 = json.load(open(f"{OUT}/v21_stats.json"))  # release v2.1 (cross-system attention)
+R22 = json.load(open(f"{OUT}/v22_stats.json"))  # release v2.2 (+ world training data; surge flag)
 EXP = [json.loads(line) for line in open("logs/goldstein_experiments.jsonl")]
 
 
@@ -186,7 +187,8 @@ def fig_benchmark():
             ("Gradient boosting, 44 hand-built features", 0.616, ORANGE),
             ("Linear regression, 44 hand-built features", lin["OLS 44 history features"]["r2"], ORANGE),
             ("v2.0: regional attention (400 dyads), 5 seeds", b["transformer v2.0 (5-seed ensemble)"]["r2"], STEP_BLUE),
-            ("v2.1: cross-system attention (1,959 dyads), 5 seeds", R21["benchmark"]["v2.1"]["r2"], BLUE)]
+            ("v2.1: cross-system attention (1,959 dyads), 5 seeds", R21["benchmark"]["v2.1"]["r2"], STEP_BLUE),
+            ("v2.2: + 5,122 world dyads as training data, 5 seeds", R22["v2.2"]["r2"], BLUE)]
     fig, ax = plt.subplots(figsize=(7.2, 3.4))
     for i, (lab, v, c) in enumerate(rows):
         dot_row(ax, i, v, c, "{:.3f}", 0.30)
@@ -205,7 +207,8 @@ def fig_path():
              ("+ residual\n(52-wk)", exp("lb13_res52_do0.2_lr0.0003_plat_s42")),
              ("+ long\nmemory", exp("lb13_res52_long_do0.2_lr0.0003_plat_s42")),
              ("+ 5 seeds\n= v2.0", S["goldstein_benchmark"]["transformer v2.0 (5-seed ensemble)"]["r2"]),
-             ("+ world dyads\n= v2.1", R21["benchmark"]["v2.1"]["r2"])]
+             ("+ world dyads\n= v2.1", R21["benchmark"]["v2.1"]["r2"]),
+             ("+ world training\ndata = v2.2", R22["v2.2"]["r2"])]
     vals = [v if isinstance(v, float) else (v["te_r2"] if v else np.nan) for _, v in steps]
     fig, ax = plt.subplots(figsize=(7.4, 3.0))
     x = np.arange(len(steps))

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy the release v2.0 live pipeline. Run from the repo root, with the
+# Deploy the release v2.2 live pipeline. Run from the repo root, with the
 # Google Cloud SDK installed and `gcloud auth login` done:
 #
 #     bash cloud_function/deploy.sh
@@ -29,9 +29,8 @@ REGION=us-central1
 FUNCTION=run-pipeline        # the existing v1.0 function - deploying replaces it
 JOB=weekly-pipeline-run      # the existing scheduler job (was Mondays 10:00 UTC) - updated in place
 BUCKET=geopolitical-risk-forecasting-models
-VERSION=v2.1                 # release folder in GCS: goldstein v2.1 + direction v2.0
-GOLDSTEIN=v2.1
-DIRECTION=v2.0
+VERSION=v2.2                 # release folder in GCS: goldstein v2.2 + conflict-surge v2.2
+GOLDSTEIN=v2.2
 SCHEDULE="0 6 * * 2"   # Tuesdays 06:00 UTC: >1 day after the as-of week ends, so GDELT has caught up
 
 # ---- 0. the release must still reproduce its own test predictions
@@ -43,9 +42,9 @@ PY=.venv/bin/python                                   # macOS / Linux venv
 # ---- 1. model files
 gcloud storage cp \
   model_release_${GOLDSTEIN}_goldstein_s*.weights.h5 \
-  model_release_${DIRECTION}_direction_s*.weights.h5 \
+  model_release_v2.2_surge_s*.weights.h5 \
   artifacts/goldstein_${GOLDSTEIN}_preprocessing.joblib \
-  artifacts/direction_${DIRECTION}_preprocessing.joblib \
+  artifacts/surge_v2.2_preprocessing.joblib \
   artifacts/risk_v1_calibration.json \
   "gs://${BUCKET}/models/${VERSION}/" --project="$PROJECT"
 
@@ -63,7 +62,7 @@ fi
 # ---- 2. function source
 BUILD=$(mktemp -d)
 cp cloud_function/main.py cloud_function/gdelt_refresh.py cloud_function/requirements.txt \
-   live_pipeline.py honest_common.py model_architectures.py risk_index.py "$BUILD/"
+   live_pipeline.py honest_common.py model_architectures.py risk_index.py target_variants.py "$BUILD/"
 echo "Function source: $(ls "$BUILD" | tr '\n' ' ')"
 
 # ---- 3. deploy

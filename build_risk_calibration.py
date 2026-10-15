@@ -1,7 +1,7 @@
 """
 Calibrate the model-based parts of the country risk index (risk_index.py)
 and record the evidence behind them. Uses only HELD-OUT predictions of the
-release models (goldstein v2.1, direction v2.0) (the validation and test weeks they were never trained
+release models (goldstein v2.2; direction v2.0 for the evidence only) (the validation and test weeks they were never trained
 on), saved by experiment_goldstein.py / release_v2.0_direction.py.
 
 1. Evidence: which signal should drive LIKELIHOOD? Each candidate is
@@ -35,8 +35,8 @@ from risk_index import (CALIBRATION_FILE, LIKELIHOOD_BANDS, aggregate, country_m
                         dyad_context, level_from_thresholds)
 
 DELTA = 0.5
-GOLDSTEIN_PREDS = {"va": "artifacts/goldstein_v2.1_val_predictions.npz",   # release v2.1 ensemble,
-                   "te": "artifacts/goldstein_v2.1_test_predictions.npz"}  # held-out weeks only
+GOLDSTEIN_PREDS = {"va": "artifacts/goldstein_v2.2_val_predictions.npz",   # release v2.2 ensemble,
+                   "te": "artifacts/goldstein_v2.2_test_predictions.npz"}  # held-out weeks only
 DIRECTION_RUNS = "artifacts/experiments/direction_v2.0_s*.npz"
 
 

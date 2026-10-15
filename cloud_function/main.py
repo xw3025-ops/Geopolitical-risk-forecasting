@@ -1,5 +1,5 @@
 """
-Cloud Function entry point for the live forecasting pipeline (release v2.0)
+Cloud Function entry point for the live forecasting pipeline (release v2.2)
 and the country risk index (risk-v1).
 
 Every run (triggered by Cloud Scheduler; HTTP, not public):
@@ -8,17 +8,17 @@ Every run (triggered by Cloud Scheduler; HTTP, not public):
   2. Rebuild BigQuery table geopolitical-risk-forecasting.1.1 from GDELT's
      public BigQuery dataset, through the as-of week (gdelt_refresh.py).
   3. Pull the last 70 complete weeks from that table (BigQuery API), run the
-     release v2.0 goldstein (13-week) and direction (4-week) model ensembles
+     release v2.2 goldstein (13-week mean) and conflict-surge (13-week peak) ensembles
      (live_pipeline.py - the same code verify_live_pipeline.py checks against
      the release test predictions).
   4. Write the 400 dyad forecasts:
-       BigQuery  predictions.forecasts_v2
-       GCS       predictions/v2.0/latest.csv, predictions/v2.0/<as_of>.csv
+       BigQuery  predictions.forecasts_v22  (new columns: the surge flag replaces direction)
+       GCS       predictions/<version>/latest.csv, predictions/<version>/<as_of>.csv
   5. Country risk index (risk_index.py): refresh the last 8 weeks of ACLED
      event counts (ACLED API) into risk.acled_country_week, fetch trade
      exposure (World Bank API), combine with the forecasts:
        BigQuery  predictions.risk_country_v1
-       GCS       predictions/v2.0/risk_latest.csv, predictions/v2.0/risk_<as_of>.csv
+       GCS       predictions/<version>/risk_latest.csv, predictions/<version>/risk_<as_of>.csv
      A failure here is reported but does not undo step 4.
 
 Re-running a week replaces that week's rows (no duplicates).
@@ -43,7 +43,7 @@ import risk_index as ri
 from gdelt_refresh import refresh_gdelt_table
 
 PROJECT = "geopolitical-risk-forecasting"
-FORECASTS_TABLE = "geopolitical-risk-forecasting.predictions.forecasts_v2"
+FORECASTS_TABLE = "geopolitical-risk-forecasting.predictions.forecasts_v22"  # v2.0/v2.1 rows stay in forecasts_v2
 RISK_TABLE = "geopolitical-risk-forecasting.predictions.risk_country_v1"
 BUCKET = "geopolitical-risk-forecasting-models"
 MODEL_VERSION = os.environ.get("MODEL_VERSION", lp.MODEL_VERSION)

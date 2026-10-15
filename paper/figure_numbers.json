@@ -5,7 +5,8 @@
   "+ residual (52-wk)": 0.6085731983184814,
   "+ long memory": 0.631838321685791,
   "+ 5 seeds = v2.0": 0.6380374431610107,
-  "+ world dyads = v2.1": 0.6467016561080172
+  "+ world dyads = v2.1": 0.6467016561080172,
+  "+ world training data = v2.2": 0.6577360381371766
  },
  "ablation": {
   "neither": {

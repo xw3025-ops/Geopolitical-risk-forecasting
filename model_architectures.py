@@ -151,8 +151,10 @@ def _shared_backbone(numeric_seq_input, actor1_input, actor2_input,
 
 def build_goldstein_model(n_dyads, lookback_weeks, n_numeric, n_countries,
                           dropout=0.1, residual_baseline=False, crossdyad_blocks=NUM_CROSSDYAD_BLOCKS,
-                          country_embedding=True):
+                          country_embedding=True, n_outputs=1):
     """Goldstein regression: plain cross-dyad attention, linear output.
+    n_outputs > 1 (multi-target experiments): k outputs per dyad, flattened
+    dyad-major to (batch, n_dyads * k); the baseline input has the same shape.
     The defaults rebuild release v1.0 exactly. residual_baseline=True adds a
     fourth input, "baseline" (batch, n_dyads) - a forecast known at
     prediction time, e.g. the trailing 26-week mean - and the network
@@ -170,11 +172,11 @@ def build_goldstein_model(n_dyads, lookback_weeks, n_numeric, n_countries,
     for i in range(crossdyad_blocks):  # 0 = ablation: every dyad predicted on its own, no cross-dyad attention
         y = _temporal_block_plain(y, name=f"crossdyad_block{i}", dropout=dropout)
 
-    output = keras.layers.Dense(1, name="per_dyad_output")(y)
-    output = keras.layers.Reshape((n_dyads,), name="squeeze")(output)
+    output = keras.layers.Dense(n_outputs, name="per_dyad_output")(y)
+    output = keras.layers.Reshape((n_dyads * n_outputs,), name="squeeze")(output)
 
     if residual_baseline:
-        baseline_input = keras.layers.Input(shape=(n_dyads,), name="baseline")
+        baseline_input = keras.layers.Input(shape=(n_dyads * n_outputs,), name="baseline")
         inputs.append(baseline_input)
         output = keras.layers.Add(name="add_baseline")([baseline_input, output])
 

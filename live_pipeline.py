@@ -1,5 +1,5 @@
 """
-Live inference for release v2.0 - the ONE implementation used by both the
+Live inference for release v2.2 - the ONE implementation used by both the
 Cloud Function (cloud_function/main.py) and local runs (run_pipeline.py).
 
 Flow:
@@ -9,20 +9,30 @@ Flow:
   2. Pull HISTORY_WEEKS complete weeks of dyad-week data from BigQuery table
      geopolitical-risk-forecasting.1.1 (via the BigQuery API), same columns
      and null handling as the training pulls (build_bq_panel_22*.py).
+     Both models also attend over the MENA<->rest-of-world dyads in their
+     artifacts (pull_external).
   3. Build model inputs with the same functions the release scripts trained
-     with (honest_common.panel_from_df / *_numeric_inputs), scale with the
-     saved training scalers, run every seed model of each release and
-     average them.
+     with (honest_common.panel_from_df, goldstein_numeric_inputs,
+     target_variants.surge_numeric_inputs), scale with the saved training
+     scalers, run every seed model of each release and average them.
   4. Return one row per MENA<->MENA dyad (400).
+
+Release v2.2 = goldstein v2.2 (v2.1 + world training data) and the
+conflict-surge flag (replaces the v2.0 direction model, which did not rank
+crises: release_v2.2_surge.py).
 
 Output columns
   model_version, as_of_week (Monday of the last complete week), generated_at_utc,
   actor1, actor2,
   goldstein_forecast_next13w   - mean goldstein over the 13 weeks after as_of_week
   goldstein_trailing52w        - the dyad's recent normal, for context
-  escalation_probability_next4w, direction_next4w
-                               - escalation = mean goldstein over the next 4
-                                 weeks LOWER than as_of_week's (relations worsening)
+  conflict_peak_forecast_next13w - highest 4-week mean conflict intensity
+                                 (log of summed |negative goldstein|) expected
+                                 in the 13 weeks after as_of_week
+  conflict_peak_normal         - the dyad's typical quarterly peak (52-week mean)
+  conflict_surge_probability   - P(next quarter's peak exceeds the normal by more
+                                 than the worst 10% of historical gaps), calibrated
+  surge_alert                  - True for the 10 dyads with the highest probability
 """
 
 import os
@@ -32,13 +42,15 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from honest_common import (COUNT_COLS, EXTRA, MENA, direction_numeric_inputs, goldstein_numeric_inputs,
-                           panel_from_df, trailing_mean)
-from model_architectures import build_direction_model, build_goldstein_model
+import target_variants as tv
+from honest_common import COUNT_COLS, EXTRA, MENA, goldstein_numeric_inputs, panel_from_df, trailing_mean
+from model_architectures import build_goldstein_model
 
-MODEL_VERSION = "v2.1"  # goldstein v2.1 (cross-system attention) + direction v2.0
-GOLDSTEIN_ARTIFACTS = "goldstein_v2.1_preprocessing.joblib"
-DIRECTION_ARTIFACTS = "direction_v2.0_preprocessing.joblib"
+MODEL_VERSION = "v2.2"  # goldstein v2.2 (cross-system + world training data) + conflict-surge flag
+GOLDSTEIN_VERSION = "v2.2"
+GOLDSTEIN_ARTIFACTS = f"goldstein_{GOLDSTEIN_VERSION}_preprocessing.joblib"
+SURGE_ARTIFACTS = "surge_v2.2_preprocessing.joblib"
+SURGE_ALERTS = 10  # dyads flagged per week
 
 SOURCE_TABLE = "geopolitical-risk-forecasting.1.1"
 HISTORY_WEEKS = 70  # both models need 64 (13-week window + 52-week averages); 6 spare
@@ -98,12 +110,12 @@ def pad_extra_pairs(df, numeric_cols):
 
 
 def pull_external(bq_client, as_of_week, pairs, n_weeks=HISTORY_WEEKS, table=SOURCE_TABLE):
-    """The MENA<->rest-of-world dyads the v2.1 goldstein model attends over
+    """The MENA<->rest-of-world dyads the cross-system models attend over
     (`pairs` = [(actor1, actor2), ...] from its artifacts), same weeks and
     null handling as pull_panel. Only the columns its inputs use."""
     from google.cloud import bigquery
 
-    cols = COUNT_COLS + ["goldstein_mean", "total_count"]
+    cols = COUNT_COLS + ["goldstein_mean", "total_count", "negative_goldstein_intensity"]
     first_week = as_of_week - timedelta(weeks=n_weeks - 1)
     query = f"""
     SELECT week_start, Actor1CountryCode, Actor2CountryCode,
@@ -132,7 +144,8 @@ def external_panel(ext_df, pairs, weeks):
     D, T = len(pairs), len(weeks)
     return dict(a1=np.array([a for a, _ in pairs]), a2=np.array([b for _, b in pairs]),
                 counts=np.nan_to_num(e[COUNT_COLS].to_numpy(dtype="float32")).reshape(D, T, 20),
-                gold_zero=np.nan_to_num(e["goldstein_mean"].to_numpy(dtype="float32")).reshape(D, T))
+                gold_zero=np.nan_to_num(e["goldstein_mean"].to_numpy(dtype="float32")).reshape(D, T),
+                neg=np.nan_to_num(e["negative_goldstein_intensity"].to_numpy(dtype="float32")).reshape(D, T))
 
 
 def check_panel(df, as_of_week, n_weeks=HISTORY_WEEKS):
@@ -169,25 +182,19 @@ def _find(model_dir, name):
 
 def load_models(model_dir):
     """Rebuild every seed model of both releases and load their weights."""
-    g = joblib.load(_find(model_dir, GOLDSTEIN_ARTIFACTS))
-    d = joblib.load(_find(model_dir, DIRECTION_ARTIFACTS))
-    cfg = g["config"]
-    g_models = []
-    for f in g["weight_files"]:
-        m = build_goldstein_model(n_dyads=g.get("n_dyads_per_week", len(MENA) ** 2),
-                                  lookback_weeks=g["lookback_weeks"], n_numeric=g["scaler"].n_features_in_,
-                                  n_countries=len(g["country_encoder"].classes_), dropout=cfg["dropout"],
-                                  residual_baseline=cfg["residual"], crossdyad_blocks=cfg.get("crossdyad_blocks", 2))
-        m.load_weights(_find(model_dir, os.path.basename(f)))
-        g_models.append(m)
-    d_models = []
-    for f in d["weight_files"]:
-        m = build_direction_model(n_dyads=d["n_dyads_per_week"], lookback_weeks=d["lookback_weeks"],
-                                  n_numeric=d["scaler"].n_features_in_, n_countries=len(d["country_encoder"].classes_),
-                                  relation_matrix=d["relation_matrix"])
-        m.load_weights(_find(model_dir, os.path.basename(f)))
-        d_models.append(m)
-    return {"goldstein": (g, g_models), "direction": (d, d_models)}
+    out = {}
+    for key, name in (("goldstein", GOLDSTEIN_ARTIFACTS), ("surge", SURGE_ARTIFACTS)):
+        art = joblib.load(_find(model_dir, name))
+        cfg, models = art["config"], []
+        for f in art["weight_files"]:
+            m = build_goldstein_model(n_dyads=art.get("n_dyads_per_week", len(MENA) ** 2),
+                                      lookback_weeks=art["lookback_weeks"], n_numeric=art["scaler"].n_features_in_,
+                                      n_countries=len(art["country_encoder"].classes_), dropout=cfg["dropout"],
+                                      residual_baseline=cfg["residual"], crossdyad_blocks=cfg.get("crossdyad_blocks", 2))
+            m.load_weights(_find(model_dir, os.path.basename(f)))
+            models.append(m)
+        out[key] = (art, models)
+    return out
 
 
 def _window_inputs(p, numeric, art):
@@ -201,58 +208,73 @@ def _window_inputs(p, numeric, art):
             "actor2_idx": enc.transform(p["a2"]).astype("int32")[np.newaxis]}
 
 
+def _cross_system(p, e, numeric_fn, baseline_fn, art):
+    """Inputs for a cross-system release: the 400 MENA dyads followed by the
+    external dyads in the release's order, window ending at the last week."""
+    numeric, baseline = numeric_fn(p), baseline_fn(p)
+    tokens = dict(a1=p["a1"], a2=p["a2"])
+    if art.get("external_dyads"):
+        numeric = np.concatenate([numeric, numeric_fn(e)], 0)
+        baseline = np.concatenate([baseline, baseline_fn(e)])
+        tokens = dict(a1=np.concatenate([p["a1"], e["a1"]]), a2=np.concatenate([p["a2"], e["a2"]]))
+    inputs = _window_inputs(tokens, numeric, art)
+    inputs["baseline"] = np.nan_to_num(baseline)[np.newaxis].astype("float32")
+    return inputs
+
+
 def predict(df, models, ext_df=None, history_weeks=HISTORY_WEEKS):
     """Forecasts as of the LAST week in `df` (which must be complete).
-    `ext_df` (pull_external) is required by the cross-system goldstein model."""
+    `ext_df` (pull_external) is required by the cross-system models."""
     g_art, g_models = models["goldstein"]
-    d_art, d_models = models["direction"]
-    need = max(g_art["history_weeks_needed"], d_art["history_weeks_needed"])
+    s_art, s_models = models["surge"]
+    need = max(g_art["history_weeks_needed"], s_art["history_weeks_needed"])
     if df.week_start.nunique() < need:
         raise ValueError(f"need >= {need} weeks of history, got {df.week_start.nunique()}")
+    if (g_art.get("external_dyads") or s_art.get("external_dyads")) and ext_df is None:
+        raise ValueError("these releases attend over external dyads - pass ext_df (pull_external)")
     cfg = g_art["config"]
-
-    # goldstein: 400 MENA dyads (+ the external dyads they attend over, v2.1)
     p = panel_from_df(df, MENA)
-    tokens = dict(a1=p["a1"], a2=p["a2"])
-    numeric = goldstein_numeric_inputs(p, cfg["long_features"], cfg["has_events"])
-    baseline = trailing_mean(p["gold_zero"], cfg["baseline_weeks"])[:, -1]
-    if g_art.get("external_dyads"):
-        if ext_df is None:
-            raise ValueError("this goldstein release attends over external dyads - pass ext_df (pull_external)")
-        e = external_panel(ext_df, g_art["external_dyads"], p["weeks"])
-        numeric = np.concatenate([numeric, goldstein_numeric_inputs(e, cfg["long_features"], cfg["has_events"])], 0)
-        baseline = np.concatenate([baseline, trailing_mean(e["gold_zero"], cfg["baseline_weeks"])[:, -1]])
-        tokens = dict(a1=np.concatenate([p["a1"], e["a1"]]), a2=np.concatenate([p["a2"], e["a2"]]))
-    inputs = _window_inputs(tokens, numeric, g_art)
-    if cfg["residual"]:
-        inputs["baseline"] = baseline[np.newaxis].astype("float32")
-    gold = np.mean([m.predict(inputs, verbose=0)[0, :len(p["a1"])] for m in g_models], axis=0)
+    D, T = p["gold_zero"].shape
+    p["neg"] = np.nan_to_num(p["df"]["negative_goldstein_intensity"].to_numpy(dtype="float32")).reshape(D, T)
+    pairs = g_art.get("external_dyads") or []
+    assert pairs == (s_art.get("external_dyads") or []), "both releases must attend over the same external dyads"
+    e = external_panel(ext_df, pairs, p["weeks"]) if pairs else None
+    n = len(p["a1"])
 
-    # direction: 484 dyads in, keep the 400 MENA<->MENA
-    p22 = panel_from_df(df, MENA + EXTRA)
-    inputs = _window_inputs(p22, direction_numeric_inputs(p22, d_art["log_cols"], d_art["raw_cols"]), d_art)
-    prob = np.mean([m.predict(inputs, verbose=0)[0, :, 1] for m in d_models], axis=0)
-    direction = pd.DataFrame({"actor1": p22["a1"], "actor2": p22["a2"], "escalation_probability_next4w": prob})
+    # goldstein: mean over the next 13 weeks
+    g_in = _cross_system(p, e, lambda q: goldstein_numeric_inputs(q, cfg["long_features"], cfg["has_events"]),
+                         lambda q: trailing_mean(q["gold_zero"], cfg["baseline_weeks"])[:, -1], g_art)
+    gold = np.mean([m.predict(g_in, verbose=0)[0, :n] for m in g_models], axis=0)
+
+    # conflict surge: peak 4-week conflict intensity over the next 13 weeks, vs the dyad's normal peak
+    normal_fn = lambda q: tv.build("peak-conflict", q["gold_zero"], q["neg"])["normal"][:, -1]
+    s_in = _cross_system(p, e, tv.surge_numeric_inputs, normal_fn, s_art)
+    peak = np.mean([m.predict(s_in, verbose=0)[0, :n] for m in s_models], axis=0)
+    normal = normal_fn(p)
+    cal = s_art["calibration"]
+    prob = 1.0 / (1.0 + np.exp(-(cal["a"] * (peak - normal) + cal["b"])))
 
     out = pd.DataFrame({"actor1": p["a1"], "actor2": p["a2"],
                         "goldstein_forecast_next13w": gold,
-                        "goldstein_trailing52w": trailing_mean(p["gold_zero"], 52)[:, -1]})
-    out = out.merge(direction, on=["actor1", "actor2"], how="left")
-    assert out.escalation_probability_next4w.notna().all()
-    out["direction_next4w"] = np.where(out.escalation_probability_next4w >= 0.5, "escalation", "de-escalation")
+                        "goldstein_trailing52w": trailing_mean(p["gold_zero"], 52)[:, -1],
+                        "conflict_peak_forecast_next13w": peak,
+                        "conflict_peak_normal": normal,
+                        "conflict_surge_probability": prob})
+    out = out.sort_values("conflict_surge_probability", ascending=False).reset_index(drop=True)
+    out["surge_alert"] = out.index < SURGE_ALERTS
     out.insert(0, "model_version", MODEL_VERSION)
     out.insert(1, "as_of_week", p["weeks"][-1].date())
     out.insert(2, "generated_at_utc", datetime.now(timezone.utc).replace(microsecond=0))
-    return out.sort_values("escalation_probability_next4w", ascending=False).reset_index(drop=True)
+    return out
 
 
 # ---------------------------------------------------------------- model files
 
 RELEASE_FILES = [
-    *(f"model_release_v2.1_goldstein_s{s}.weights.h5" for s in (42, 1, 2, 3, 4)),
-    *(f"model_release_v2.0_direction_s{s}.weights.h5" for s in (42, 1, 2)),
+    *(f"model_release_{GOLDSTEIN_VERSION}_goldstein_s{s}.weights.h5" for s in (42, 1, 2, 3, 4)),
+    *(f"model_release_v2.2_surge_s{s}.weights.h5" for s in (42, 1, 2, 3, 4)),
     GOLDSTEIN_ARTIFACTS,
-    DIRECTION_ARTIFACTS,
+    SURGE_ARTIFACTS,
     "risk_v1_calibration.json",  # country risk index (risk_index.py)
 ]
 

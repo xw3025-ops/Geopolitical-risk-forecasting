@@ -24,7 +24,7 @@ from run_pipeline import local_external, local_frame
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--as-of", default="2026-06-22", help="a week in both release test periods")
+    ap.add_argument("--as-of", default="2026-05-25", help="a week in both release test periods")
     args = ap.parse_args()
     as_of = pd.Timestamp(args.as_of)
 
@@ -39,8 +39,9 @@ def main():
     t = weeks.get_loc(as_of)
     ok = True
     for name, path, key, col in [
-        ("goldstein", "artifacts/goldstein_v2.1_test_predictions.npz", "pred", "goldstein_forecast_next13w"),
-        ("direction", "artifacts/direction_v2.0_test_predictions.npz", "prob", "escalation_probability_next4w"),
+        ("goldstein", f"artifacts/goldstein_{lp.GOLDSTEIN_VERSION}_test_predictions.npz", "pred",
+         "goldstein_forecast_next13w"),
+        ("surge", "artifacts/surge_v2.2_test_predictions.npz", "pred", "conflict_peak_forecast_next13w"),
     ]:
         z = np.load(path, allow_pickle=True)
         row = int(np.where(z["week_idx"] == t)[0][0])

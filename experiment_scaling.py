@@ -48,7 +48,7 @@ LOG = "logs/scaling.jsonl"
 
 def external_pool(weeks, min_active):
     cols = ["week_start", "Actor1CountryCode", "Actor2CountryCode", "dyad_scope", "goldstein_mean",
-            "total_count", "target_avg_goldstein_next13w"] + COUNT_COLS
+            "total_count", "negative_goldstein_intensity", "target_avg_goldstein_next13w"] + COUNT_COLS
     df = pd.read_parquet(WIDE, columns=cols)
     df = df[df.dyad_scope == "EXTERNAL_LINK"]
     df["week_start"] = pd.to_datetime(df.week_start)
@@ -62,6 +62,7 @@ def external_pool(weeks, min_active):
     return dict(a1=np.array([a for a, _ in keep]), a2=np.array([b for _, b in keep]),
                 counts=np.nan_to_num(df[COUNT_COLS].to_numpy(dtype="float32")).reshape(D, T, 20),
                 gold_zero=np.nan_to_num(df["goldstein_mean"].to_numpy(dtype="float32")).reshape(D, T),
+                neg=np.nan_to_num(df["negative_goldstein_intensity"].to_numpy(dtype="float32")).reshape(D, T),
                 target13=df["target_avg_goldstein_next13w"].to_numpy(dtype="float32").reshape(D, T))
 
 
