@@ -44,7 +44,7 @@ def local_external(as_of_week, pairs, n_weeks=lp.HISTORY_WEEKS):
     pull the v2.1 model was trained on - what pull_external would return."""
     from honest_common import COUNT_COLS
     cols = ["week_start", "Actor1CountryCode", "Actor2CountryCode", "dyad_scope", "goldstein_mean",
-            "total_count"] + COUNT_COLS
+            "total_count", "negative_goldstein_intensity"] + COUNT_COLS
     e = pd.read_parquet(WIDE, columns=cols)
     e = e[e.dyad_scope == "EXTERNAL_LINK"].drop(columns="dyad_scope")
     e["week_start"] = pd.to_datetime(e["week_start"])
@@ -89,11 +89,11 @@ def main():
     os.makedirs("predictions", exist_ok=True)
     out = f"predictions/forecast_{lp.MODEL_VERSION}_{as_of}.csv"
     results.to_csv(out, index=False)
-    cols = ["actor1", "actor2", "escalation_probability_next4w", "goldstein_forecast_next13w",
-            "goldstein_trailing52w"]
+    cols = ["actor1", "actor2", "conflict_surge_probability", "conflict_peak_forecast_next13w",
+            "conflict_peak_normal", "goldstein_forecast_next13w", "goldstein_trailing52w"]
     print(f"\nAs-of week {as_of} (data through {pd.Timestamp(as_of) + pd.Timedelta(days=6):%Y-%m-%d}); "
           f"wrote {len(results)} forecasts to {out}")
-    print("\nMost likely to escalate in the next 4 weeks:")
+    print(f"\nConflict-surge alerts (top {lp.SURGE_ALERTS}) for the next 13 weeks:")
     print(results[cols].head(10).to_string(index=False, float_format="%.3f"))
     worst = results.assign(change=results.goldstein_forecast_next13w - results.goldstein_trailing52w)
     print("\nLargest expected 13-week deterioration vs the dyad's 52-week normal:")
