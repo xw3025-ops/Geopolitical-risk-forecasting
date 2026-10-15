@@ -35,7 +35,9 @@ DIRECTION=v2.0
 SCHEDULE="0 6 * * 2"   # Tuesdays 06:00 UTC: >1 day after the as-of week ends, so GDELT has caught up
 
 # ---- 0. the release must still reproduce its own test predictions
-.venv/Scripts/python.exe verify_live_pipeline.py 2>/dev/null | tail -1 | grep -q PASS \
+PY=.venv/bin/python                                   # macOS / Linux venv
+[ -x "$PY" ] || PY=.venv/Scripts/python.exe           # Windows venv
+"$PY" verify_live_pipeline.py 2>/dev/null | tail -1 | grep -q PASS \
   || { echo "verify_live_pipeline.py did not PASS - not deploying"; exit 1; }
 
 # ---- 1. model files

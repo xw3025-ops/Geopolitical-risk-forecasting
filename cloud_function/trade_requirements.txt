@@ -1,0 +1,7 @@
+# Cloud Function "trade-refresh" (deploy_trade.sh). No TensorFlow: downloads + BigQuery loads only.
+functions-framework==3.*
+pandas==3.0.6
+requests==2.34.2
+pyarrow==26.0.0
+google-cloud-bigquery==3.45.2
+db-dtypes==1.7.1

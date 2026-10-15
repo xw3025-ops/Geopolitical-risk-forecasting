@@ -6,8 +6,12 @@ Inputs
   data/processed/exposure_table.csv       predetermined (baseline) exposure by country
 Output
   data/processed/panel_country_month.csv  one row per iso3 x month
-Run:  python src/build_panel.py
+Run:  python src/build_panel.py [--end 2026-06]
+  --end  last month kept (default: the last month of China-reported trade data).
+         Fixed, so the panel does not depend on the date the script is run.
 """
+import argparse
+
 import numpy as np
 import pandas as pd
 
@@ -18,6 +22,10 @@ ROOT_DIR = RAW_IMF.parent
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--end", help="last month kept, YYYY-MM (default: last trade month)")
+    args = ap.parse_args()
+
     # --- trade (China-reported), USD bn, partner level
     raw = pd.read_csv(RAW_IMF / "imts_raw.csv")
     t = raw[(raw.side == "china") & (raw.reporter == CHINA) & raw.counterpart.isin(PARTNERS)]
@@ -31,11 +39,13 @@ def main():
         t[f"{c}_yoy"] = t[f"{c}_usd"] / g.shift(12) - 1                       # year-on-year growth
         t[f"{c}_dlog12"] = np.log(t[f"{c}_usd"]) - np.log(g.shift(12))        # log diff, safer for regressions
     t = t.drop(columns=["imp_usd", "exp_usd"])
+    end = pd.Period(args.end, "M") if args.end else t.period.max()
+    t = t[t.period <= end]
 
-    # --- GDELT conflict: drop the incomplete current month, add coverage-robust ratios
+    # --- GDELT conflict: cut at the fixed end month (also drops any incomplete month), add ratios
     gd = pd.read_csv(ROOT_DIR / "gdelt" / "gdelt_country_month.csv")
     gd["period"] = pd.PeriodIndex(gd.ym.astype(str), freq="M")
-    gd = gd[gd.period < pd.Period(pd.Timestamp.today(), "M")]
+    gd = gd[gd.period <= end]
     gd["t2t4_share"] = gd.n_t2_t4 / gd.n_events
     gd["ln_t2t4"] = np.log1p(gd.n_t2_t4)
     gd = gd.sort_values(["iso3", "period"])

@@ -7,6 +7,7 @@ data/ucdp/
 data/imf_imts/
 data/comtrade/
 data/gdelt/
+data/portwatch/
 data/processed/
 old/
 .DS_Store

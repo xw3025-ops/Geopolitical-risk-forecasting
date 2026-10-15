@@ -142,6 +142,134 @@ Brier scores beat a constant forecast for all six models. Calibration is good up
 
 ---
 
+## Trade module: does conflict spill over into China's trade with the region? (`src/`)
+
+China's monthly goods trade with the 20 MENA countries + USA (IMF IMTS, China-reported, 2017-01 to 2026-06), linked to GDELT conflict and to each partner's exposure to the Strait of Hormuz.
+
+```bash
+python src/fetch_imf_imts.py            # IMF API (no key) -> data/imf_imts/imts_raw.csv
+python src/fetch_portwatch.py           # IMF PortWatch chokepoint transits (no key) -> data/portwatch/
+python src/fetch_comtrade_energy.py     # needs COMTRADE_KEY in .env -> data/comtrade/china_energy_2024.csv
+python src/fetch_gdelt.py <gcp-project> # BigQuery, ~37 GB scan -> data/gdelt/gdelt_country_month.csv
+python src/build_exposure.py            # Hormuz-exposed energy imports (low/high scenarios)
+python src/build_panel.py [--end YYYY-MM]   # country-month panel (fixed end month = last trade month)
+python src/check_trade_data.py          # units, mirror-data independence, missing months, revealed dependence
+python src/run_regression.py            # fixed-effects regressions + robustness grid
+python src/trade_baseline.py            # OPERATIONAL forecast: shrunk persistence, backtest, latest forecast (~2 s)
+# research track (not used for the forecast):
+python src/make_training_samples.py     # country-week tensors for the trade transformer
+python src/train_trade_transformer.py   # transformer + benchmarks (~40 min on a laptop CPU; retrain before reuse)
+```
+
+### Findings
+
+**The 2026 Hormuz shock.** GDELT violence in the Gulf jumps 4x from the week of 2026-02-23. In Apr-Jun 2026 China's imports (USD value, vs Apr-Jun 2025) fell 89% from Iraq, 88% from Qatar, 83% from Kuwait and 75% from the UAE, while imports from Saudi Arabia *rose* 12% (Red Sea outlet at Yanbu) and from Oman were flat until a 76% drop in June.
+
+**Regression** (`run_regression.py`; China's imports from partner *i*, 12-month log change; country and month fixed effects; Gulf conflict shock × Hormuz exposure):
+
+| Specification (lags 0-3 jointly, cumulative effect) | β | two-way cluster p | permutation p |
+|---|---|---|---|
+| Imports, exposure high / low | −0.45 / −0.49 | 0.001 / <0.001 | 0.004 / 0.004 |
+| Exports, exposure high | −0.21 | 0.005 | 0.015 |
+| Imports, sample ending 2025-12 (no 2026 shock) | −0.08 | 0.52 | 0.74 |
+| Imports, energy share without route parameters | −0.23 | 0.08 | 0.09 |
+| Own-country conflict (no exposure) | −0.19 | 0.43 | n/a |
+
+A 1-SD rise in Gulf conflict sustained over four months lowers import growth from a fully exposed partner by about 45 log points. The result survives dropping the USA, the war-torn countries, Iran and the UAE, and small flows, and the Oman = 1 or Saudi = 0.8 parameter changes. But **it is identified by the 2026 episode alone: before 2026 the effect is zero.** The route parameters matter: raw energy share fits worse than Hormuz-dependence-weighted exposure. With only 5 exposed partners, use the permutation p-values.
+
+**Data checks** (`check_trade_data.py`):
+- Units: IMF values are full USD. China's 2024 totals match customs ($3,580 bn exports, $2,587 bn imports). `SCALE = 6` is only publication precision.
+- Mirror (partner-reported) data is **not independent** for the exposed countries. For IRQ, ARE, IRN (and DJI, YEM, LBY) the IMF fills the series from China's own figures (STATUS `e`, constant 1.06 CIF/FOB ratio). Kuwait and Oman report almost no oil exports to China. The "replace with mirror data" robustness check cannot be done for these countries.
+- `imp_yoy` has 25 fewer values than `exp_yoy` because China reports no imports from PSE in 13 months, DJI in 2 and LBY in 1.
+- Revealed Hormuz dependence (2026 value drop ÷ energy share; a lower bound, because oil prices rose): IRQ ≈ 0.91, KWT ≈ 0.93, QAT ≈ 0.96, ARE ≈ 1.0, SAU < 0. This is a validation check only. The parameters are set from EIA route data, never fitted to the 2026 outcome, which would make the regression circular.
+
+**Hormuz parameters** (`data/hormuz/hormuz_dependence.csv`, checked against EIA on 2026-10-14; each row lists its sources and the 2026 check):
+- Iraq: 0.88–1.00 (was 0.52–1.00). EIA: all 2024 seaborne exports left from the southern Gulf terminals; Kirkuk-Ceyhan carried about 0.4 mb/d of northern crude and cannot take Basra grades.
+- UAE crude: 0.44–0.66, now relative to total exports (3.2 mb/d) with the 1.8 mb/d Fujairah pipeline. UAE and Qatar LNG: 1.00, since both load inside the Gulf.
+- Saudi Arabia: unchanged at 0.08–0.45. EIA reports the East-West bypass was attacked in Sep 2026, so the real dependence varies over time.
+- Oman: 0, confidence raised to medium (EIA places Duqm, Sohar and the LNG plant outside the strait).
+- Hormuz-exposed energy imports are now 79.7–107.1 bn USD (3.1–4.1% of China's 2024 imports). The regression results above use the updated parameters.
+
+### Operational trade forecast: shrunk persistence (`src/trade_baseline.py`)
+
+For each MENA partner and each flow, every week:
+
+> next-13-week change vs a year earlier = **k × the latest published 3-month change vs a year earlier**
+
+with k = 0.236 for imports and 0.380 for exports (fitted on all labelled weeks, 2017–2026). So about a quarter of a recent import swing, and about 40% of an export swing, is expected to persist over the next quarter; the rest reverts. Flows under $100 m a year get no forecast.
+
+- **Publication lag:** a month is used only 100 days after it ends, because the automated pipeline uses the IMF, whose data on 2026-10-14 ended at June 2026.
+- **80% interval:** the 10th–90th percentile of the model's past out-of-sample errors.
+- **Hormuz flag:** set when PortWatch tanker transits are below half of normal. It warns the analyst and does not change the number.
+
+**Walk-forward backtest** (k refitted each year on earlier data only; skill = 1 − MSE / MSE of "no change"):
+
+| Data lag | Imports skill | Exports skill | Out-of-sample R² (imp / exp) | 80% interval coverage (imp / exp) |
+|---|---|---|---|---|
+| IMF, 100 days (what the pipeline uses) | +0.057 | +0.110 | 0.048 / 0.062 | 71% / 79% |
+| China customs, 28 days | +0.088 | +0.199 | 0.082 / 0.155 | 73% / 80% |
+
+R² compares errors with the average outcome of the test rows, an average nobody knows in advance. Skill compares them with "no change", which is what you would actually say without a model. In single years R² is often negative: in 2021, for example, almost all trade rose, and no forecast made at the start of the year knew by how much.
+
+The skill is modest and varies by year (exports from −0.03 to +0.28). Import intervals are too narrow, covering 71% instead of 80%, because oil cargoes produce heavy-tailed errors. Feeding in China customs data (about 3 weeks after month end) would nearly double export skill. In 2026 coverage fell to 50–60%: the persistence rule cannot know that a closure will continue.
+
+### Trade transformer (country × week), research track, not used for the forecast
+
+The saved weights were trained before the Hormuz parameter revision and the missing-month fix. Retrain before reusing them.
+
+**Task.** At the end of each week, forecast for every MENA country the **year-on-year % change of China's imports from it and exports to it over the next 13 weeks**. Formally, y = log(trade over the next 91 days) − log(the same 91 days a year earlier), with monthly IMF values spread evenly over days. Year-on-year removes Chinese New Year seasonality. Flows under $100 m a year are not graded, because their growth rates are noise.
+
+**Inputs (no look-ahead).** Each country-week token has 25 inputs:
+- weekly GDELT: domestic and international attention, violent and material-conflict shares, Goldstein, a violence surge vs the past year
+- UCDP deaths, lagged 4 weeks
+- last complete month of location-based GDELT
+- published trade growth (1/3/12-month YoY): month *m* is only used 28 days after it ends
+- China's world trade growth, data staleness, and season
+
+Static Hormuz exposure is added to each country token. Standardisation uses training weeks only.
+
+**Architecture** (`train_trade_transformer.py`, 45,714 parameters, d_model 32, 4 heads, SwiGLU width 64):
+1. A **temporal transformer** (2 blocks): each country attends over its own last 13 weeks.
+2. Its summary plus a **country embedding** (8-d) plus static exposure form one token per country.
+3. A **contextual transformer** (2 blocks): each country attends to the other 19 countries in the same week.
+4. A head outputs imports and exports per country.
+
+Training: 5-seed ensembles, AdamW, early stopping on validation. Splits are train 2019-04 to 2023-06 (220 weeks), val 2023-10 to 2024-09, test 2025-01 to 2026-03, with 13-week embargoes. The test includes the shock.
+
+**Test results** (skill = 1 − MSE / MSE of "no change"; higher is better):
+
+| Model | Imports skill | Exports skill | Imports skill, 2026 shock origins | Validation MSE |
+|---|---|---|---|---|
+| shrunk persistence (latest 3-month YoY × slope fitted on train) | 0.171 | **0.280** | 0.005 | |
+| LightGBM, same inputs | 0.032 | −0.042 | 0.005 | |
+| transformer, full | 0.083 | 0.016 | −0.004 | 0.133 |
+| transformer, no contextual attention | 0.151 | 0.091 | 0.096 | 0.149 |
+| transformer, trade inputs only (no conflict data) | 0.046 | −0.007 | −0.010 | **0.132** (selected) |
+| transformer, residual on shrunk persistence | **0.187** | 0.187 | 0.026 | 0.149 |
+
+How to read this:
+1. **No model foresaw the 2026 collapse.** At the 2026-03-02 origin, after the Gulf violence spike was already in the data, every model forecast Iraq/Kuwait/Qatar imports within ±10% of a year earlier. The realised change was −78%. Training years contain no sustained chokepoint closure, and the regression confirms that conflict had no trade effect before 2026.
+2. **Conflict inputs add no validated skill.** The trade-only ablation ties the full model on validation and test.
+3. Validation and test disagree on the best variant: contextual attention helps on validation but not on test, and the residual variant is best on test but not on validation. With about 17 independent quarters of training data, these differences are within noise. The release uses the validation choice (`trade_only`). Do not re-pick a variant using test results.
+4. Simple shrunk persistence is as good as any network. Treat it as the baseline to beat.
+
+**Live forecast** (`predict_trade.py` → `outputs/trade_forecast_<origin>_all_models.csv`; latest origin 2026-08-24, because the IMF data end in 2026-06). For the Hormuz-exposed exporters the models disagree:
+
+| | latest 3-month change | shrunk persistence | residual transformer | selected (`trade_only`, refit on all data) |
+|---|---|---|---|---|
+| Iraq | −87% | −48% | −45% | +4% |
+| Kuwait | −83% | −44% | −40% | +6% |
+| Qatar | −87% | −48% | −42% | +5% |
+| UAE | −75% | −36% | −36% | +3% |
+
+The networks learned that sharp drops in China's oil imports (lumpy cargoes) revert within a quarter, so they forecast recovery. That is right only if the strait has reopened. These rows are flagged `regime_flag` and need an analyst's judgement on the shipping situation. Before relying on any of them, get the months after 2026-06: the IMF publishes 3-4 months late, and China's customs releases are faster.
+
+**Data refresh.** A separate small Cloud Function, `trade-refresh` (`cloud_function/trade_refresh.py`), reloads IMF IMTS and PortWatch into BigQuery `trade.imf_imts_raw` and `trade.portwatch_daily` every Tuesday at 07:00 UTC. It is separate from the forecasting function, so a trade-data failure cannot affect the forecasts, and deploying it does not re-upload the release models. To deploy: `gcloud auth login`, then `bash cloud_function/deploy_trade.sh`.
+
+**PortWatch** is public (no API key). Daily data covers 2019-01-01 onward, so it cannot reach back to the GDELT start (2014-12), but it covers the transformer's whole training window. Hormuz tanker transits fell from about 50–65 a day to 0–1 a day on 2026-03-02, and were still 4–17 a week in Sep–Oct 2026. It is downloaded but not yet a model input.
+
+---
+
 ## Repository map
 
 | Stage | Files | Notes |
@@ -157,6 +285,7 @@ Brier scores beat a constant forecast for all six models. Calibration is good up
 | **v2 config** | `risk_config.py` | Country lists (MENA, CHN, Belt and Road hosts), UCDP name mapping, reporting lag, paths |
 | **v2 data** | `build_risk_panel.py`, `build_gdelt_panel.py`, `build_ucdp_country_week.py` | Clean panel (step 1), China and host-country GDELT pull (step 2), UCDP fatalities (step 3) |
 | **v2 models** | `risk_features.py`, `train_risk_gbm.py`, `predict_risk.py` → `models/risk_gbm/` | Shared features and targets, backtest and training, weekly scoring (step 4) |
+| **Trade module** | `src/*.py`, `sql/gdelt_country_month.sql`, `data/hormuz/hormuz_dependence.csv` | China–MENA trade (IMF IMTS), Hormuz exposure, FE regressions, trade transformer → `models/trade_transformer/` |
 
 ### Countries
 
@@ -169,10 +298,13 @@ Some panels add USA and CHN, but **only as attention context**: their dyads are 
 |---|---|---|
 | `target_avg_goldstein_next13w` | Mean of the weekly average Goldstein score over weeks t+1 … t+13 | goldstein regression models |
 | `target_avg_goldstein_next4w` | Same, over weeks t+1 … t+4 | v10, v12, direction releases |
-| direction label | `1` if the future average is **higher** than *this week's single* Goldstein value | v9, v10, v12, direction releases |
+| direction label, v1.0-era | `1` = **improve**: the future average is **higher** than *this week's single* Goldstein value | v9, v10, v12, release_direction_A/B, release v1.0 |
+| direction label, v2.0 (deployed) | `1` = **escalation**: the next-4-week average is **lower** than this week's value (`honest_common.escalation_label`) | release_v2.0_direction.py, live pipeline |
 | `target_top_label_13w_ahead` | Most frequent CAMEO root code 13 weeks ahead | `train.py` |
 
-> ⚠️ **Sign convention.** Goldstein runs from −10 (most conflictual) to +10 (most cooperative). In the direction models, label `1` = "escalation" means the score **rose**, i.e. relations became *more cooperative*. That is the opposite of the usual conflict-studies meaning. Rename the label to `improve` / `worsen` before showing it in any dashboard.
+> ⚠️ **Sign convention.** Goldstein runs from −10 (most conflictual) to +10 (most cooperative).
+> - **v2.0 (deployed; live pipeline, BigQuery `forecasts_v2`):** `escalation_probability_next4w` and `direction_next4w = "escalation"` mean the score is expected to **fall**, i.e. relations move toward conflict. This is the usual meaning and is safe to show on a dashboard.
+> - **v1.0-era models:** label `1` meant the score **rose**, i.e. relations became *more cooperative*. These scripts and the legacy v1.0 pipeline now say `improve` / `worsen_or_flat`, and the legacy output column is `improve_probability`. Never mix v1.0 and v2.0 direction outputs.
 
 ---
 
@@ -258,7 +390,7 @@ Ordered by expected value per unit of effort.
 - [x] Remove or properly source the LBY/SDN Goldstein data. Keep missing values as NaN plus a `has_events` flag (v2: `build_risk_panel.py`; `build_gdelt_panel.py` creates no padded dyads).
 - [x] Weight targets by event count. Normalise counts by GDELT volume (v2 uses the panel's total volume; global volume would be better).
 - [x] Keep the most recent weeks so live scoring is possible (v2 keeps every week; the v1 BigQuery builders still drop them).
-- [x] Retire the direction label. v2 uses `worsen` / `violence` / `escalate` (the v1 scripts are unchanged).
+- [x] Retire the direction label. v2 uses `worsen` / `violence` / `escalate`. The v1 scripts keep their logic; their wording now says `improve` instead of the misleading "escalation".
 - [x] Save the preprocessing artifacts next to each model, and load them in a single prediction script (`models/risk_gbm/*/meta.json`, `predict_risk.py`).
 
 ### P1: evaluation you can trust

@@ -1,0 +1,266 @@
+{
+ "countries": [
+  "ARE",
+  "BHR",
+  "CYP",
+  "DJI",
+  "EGY",
+  "IRN",
+  "IRQ",
+  "ISR",
+  "JOR",
+  "KWT",
+  "LBN",
+  "LBY",
+  "OMN",
+  "PSE",
+  "QAT",
+  "SAU",
+  "SDN",
+  "SYR",
+  "TUR",
+  "YEM"
+ ],
+ "features": [
+  "dom_attention",
+  "dom_violent_share",
+  "dom_matconf_share",
+  "dom_goldstein",
+  "rel_attention",
+  "rel_violent_share",
+  "inbound_violent_share",
+  "rel_goldstein",
+  "violent_surge_52",
+  "ucdp_log_deaths",
+  "geo_t2t4_share",
+  "geo_conflict_share",
+  "imp_yoy_1m",
+  "imp_yoy_3m",
+  "imp_yoy_12m",
+  "imp_log_level",
+  "exp_yoy_1m",
+  "exp_yoy_3m",
+  "exp_yoy_12m",
+  "exp_log_level",
+  "world_imp_yoy_3m",
+  "world_exp_yoy_3m",
+  "trade_staleness_weeks",
+  "season_sin",
+  "season_cos"
+ ],
+ "conflict_features": [
+  "dom_attention",
+  "dom_violent_share",
+  "dom_matconf_share",
+  "dom_goldstein",
+  "rel_attention",
+  "rel_violent_share",
+  "inbound_violent_share",
+  "rel_goldstein",
+  "violent_surge_52",
+  "ucdp_log_deaths",
+  "geo_t2t4_share",
+  "geo_conflict_share"
+ ],
+ "lookback": 13,
+ "d_model": 32,
+ "heads": 4,
+ "ff_dim": 64,
+ "temporal_blocks": 2,
+ "context_blocks": 2,
+ "dropout": 0.2,
+ "params": 45714,
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "best_epochs": {
+  "full": [
+   6,
+   25,
+   7,
+   3,
+   6
+  ],
+  "no_context": [
+   4,
+   8,
+   61,
+   5,
+   3
+  ],
+  "trade_only": [
+   6,
+   6,
+   3,
+   3,
+   6
+  ],
+  "residual": [
+   16,
+   2,
+   15,
+   3,
+   11
+  ]
+ },
+ "val_mse": {
+  "full": 0.1328439459204674,
+  "no_context": 0.1491282433271408,
+  "trade_only": 0.13164875507354737,
+  "residual": 0.14867327809333802
+ },
+ "persistence_shrink": [
+  0.32320839166641235,
+  0.4428892135620117
+ ],
+ "runs": [
+  {
+   "variant": "full",
+   "seed": 0,
+   "best_epoch": 6,
+   "val_mse": 0.13688786327838898
+  },
+  {
+   "variant": "full",
+   "seed": 1,
+   "best_epoch": 25,
+   "val_mse": 0.1447938233613968
+  },
+  {
+   "variant": "full",
+   "seed": 2,
+   "best_epoch": 7,
+   "val_mse": 0.12217002362012863
+  },
+  {
+   "variant": "full",
+   "seed": 3,
+   "best_epoch": 3,
+   "val_mse": 0.1310640275478363
+  },
+  {
+   "variant": "full",
+   "seed": 4,
+   "best_epoch": 6,
+   "val_mse": 0.12930399179458618
+  },
+  {
+   "variant": "no_context",
+   "seed": 0,
+   "best_epoch": 4,
+   "val_mse": 0.1571359485387802
+  },
+  {
+   "variant": "no_context",
+   "seed": 1,
+   "best_epoch": 8,
+   "val_mse": 0.15334418416023254
+  },
+  {
+   "variant": "no_context",
+   "seed": 2,
+   "best_epoch": 61,
+   "val_mse": 0.15056204795837402
+  },
+  {
+   "variant": "no_context",
+   "seed": 3,
+   "best_epoch": 5,
+   "val_mse": 0.14586029946804047
+  },
+  {
+   "variant": "no_context",
+   "seed": 4,
+   "best_epoch": 3,
+   "val_mse": 0.1387387365102768
+  },
+  {
+   "variant": "trade_only",
+   "seed": 0,
+   "best_epoch": 6,
+   "val_mse": 0.1357409656047821
+  },
+  {
+   "variant": "trade_only",
+   "seed": 1,
+   "best_epoch": 6,
+   "val_mse": 0.1305846869945526
+  },
+  {
+   "variant": "trade_only",
+   "seed": 2,
+   "best_epoch": 3,
+   "val_mse": 0.12968464195728302
+  },
+  {
+   "variant": "trade_only",
+   "seed": 3,
+   "best_epoch": 3,
+   "val_mse": 0.1393633335828781
+  },
+  {
+   "variant": "trade_only",
+   "seed": 4,
+   "best_epoch": 6,
+   "val_mse": 0.12287014722824097
+  },
+  {
+   "variant": "residual",
+   "seed": 0,
+   "best_epoch": 16,
+   "val_mse": 0.145578071475029
+  },
+  {
+   "variant": "residual",
+   "seed": 1,
+   "best_epoch": 2,
+   "val_mse": 0.163679838180542
+  },
+  {
+   "variant": "residual",
+   "seed": 2,
+   "best_epoch": 15,
+   "val_mse": 0.13718970119953156
+  },
+  {
+   "variant": "residual",
+   "seed": 3,
+   "best_epoch": 3,
+   "val_mse": 0.15131060779094696
+  },
+  {
+   "variant": "residual",
+   "seed": 4,
+   "best_epoch": 11,
+   "val_mse": 0.14560817182064056
+  }
+ ],
+ "samples_meta": {
+  "horizon_days": 91,
+  "lookback": 13,
+  "pub_lag_days": 28,
+  "ucdp_lag_weeks": 4,
+  "min_flow_usd": 100000000.0,
+  "y_clip": 1.5,
+  "splits": {
+   "train_end": "2023-06-26",
+   "val": [
+    "2023-10-02",
+    "2024-09-30"
+   ],
+   "test_start": "2025-01-06"
+  },
+  "last_trade_month": "2026-06"
+ },
+ "scaler": "mu/sd stored in data/processed/trade_weekly_samples.npz",
+ "final": {
+  "variant": "trade_only",
+  "epochs": 6,
+  "origins": 337,
+  "live_origin": "2026-08-24"
+ }
+}

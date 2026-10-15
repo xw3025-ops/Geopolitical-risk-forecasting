@@ -292,11 +292,12 @@ def main():
     current_valid = current_goldstein_all[:, LOOKBACK_WEEKS - 1: LOOKBACK_WEEKS - 1 + n_pred_weeks]
     print(f"{n_valid_target} weeks have a valid target; {n_pred_weeks} usable prediction weeks")
 
-    # Binary direction label: 1 = escalation (future 4w avg goldstein ROSE
-    # above the current week's own value), 0 = de-escalation (fell or flat).
+    # Binary direction label: 1 = IMPROVE (future 4w avg goldstein ROSE
+    # above the current week's own value), 0 = worsen or flat. (These v1.0-era scripts called
+    # label 1 'escalation'; it means relations became MORE cooperative. v2.0 uses the opposite.)
     direction_valid = (y_valid > current_valid).astype("int32")  # (dyads, n_pred_weeks)
     escalation_rate = direction_valid.mean()
-    print(f"Class balance: {escalation_rate:.1%} escalation, {1 - escalation_rate:.1%} de-escalation")
+    print(f"Class balance: {escalation_rate:.1%} improve (goldstein rose), {1 - escalation_rate:.1%} worsen or flat")
     onehot_valid = keras.utils.to_categorical(direction_valid, num_classes=2)  # (dyads, n_pred_weeks, 2)
 
     numeric_seq = np.transpose(windows_valid, (1, 0, 2, 3))  # (n_pred_weeks, dyads, W, n_numeric)
@@ -372,7 +373,7 @@ def main():
     for i in range(NUM_CROSSDYAD_BLOCKS):
         y = structural_crossdyad_block(y, relation_matrix, name=f"crossdyad_block{i}")
 
-    # 2-way softmax per dyad: [P(de-escalation), P(escalation)] - already
+    # 2-way softmax per dyad: [P(worsen or flat), P(improve)] - already
     # shape (batch, dyads, 2), matching the one-hot target, no reshape needed.
     output = keras.layers.Dense(2, activation="softmax", name="per_dyad_output")(y)
 
@@ -403,7 +404,7 @@ def main():
     true_class_mena = np.argmax(y_test[:, mena_bool], axis=-1).ravel()
 
     test_acc = (pred_class_mena == true_class_mena).mean()
-    majority_class = int(np.round(y_train[:, mena_bool, 1].mean()))  # 1 if escalation is majority, else 0
+    majority_class = int(np.round(y_train[:, mena_bool, 1].mean()))  # 1 if improve is majority, else 0
     baseline_acc = (true_class_mena == majority_class).mean()
 
     tp = int(((pred_class_mena == 1) & (true_class_mena == 1)).sum())
@@ -415,8 +416,8 @@ def main():
 
     print(f"\n=== MENA<->MENA dyads only (400 of 441 - what the loss actually graded) ===")
     print(f"Test accuracy: {test_acc:.4f}   (always-predict-majority-class baseline: {baseline_acc:.4f})")
-    print(f"Confusion matrix:  TP(escalation)={tp}  TN(de-escalation)={tn}  FP={fp}  FN={fn}")
-    print(f"Escalation precision: {precision_esc:.4f}   recall: {recall_esc:.4f}")
+    print(f"Confusion matrix:  TP(improve)={tp}  TN(worsen or flat)={tn}  FP={fp}  FN={fn}")
+    print(f"Improve precision: {precision_esc:.4f}   recall: {recall_esc:.4f}")
 
     # For reference only: how the (never-graded) USA dyads happen to look,
     # purely from weights shaped by the MENA<->MENA loss.

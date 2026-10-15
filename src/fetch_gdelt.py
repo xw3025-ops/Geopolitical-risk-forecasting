@@ -25,6 +25,7 @@ print(f"Estimated scan: {est / 1e9:.1f} GB (free tier: 1 TB/month)")
 
 df = client.query(sql).to_dataframe()
 out = ROOT / "data" / "gdelt" / "gdelt_country_month.csv"
+out.parent.mkdir(parents=True, exist_ok=True)
 df.to_csv(out, index=False)
 print(f"{len(df):,} rows -> {out}")
 print(df.groupby("iso3").ym.agg(["min", "max", "count"]))

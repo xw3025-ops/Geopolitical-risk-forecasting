@@ -119,8 +119,9 @@ def main():
 
     direction_df = pd.DataFrame({
         "actor1": dyad_actor1_d, "actor2": dyad_actor2_d,
-        "predicted_direction": np.where(direction_probs[:, 1] >= 0.5, "escalation", "de-escalation"),
-        "escalation_probability": direction_probs[:, 1],
+        # v1.0 label 1 = goldstein ROSE = relations IMPROVE (it used to be called "escalation")
+        "predicted_direction": np.where(direction_probs[:, 1] >= 0.5, "improve", "worsen_or_flat"),
+        "improve_probability": direction_probs[:, 1],
     })
     # Only the original MENA<->MENA dyads were ever graded - USA/CHN dyads
     # are context-only and their own predictions were never trained to be
@@ -135,7 +136,7 @@ def main():
     results = goldstein_df.merge(direction_df, on=["actor1", "actor2"], how="inner")
     results.insert(0, "as_of_week", as_of_week_g.date())
     results.insert(1, "generated_at_utc", datetime.now(timezone.utc).isoformat(timespec="seconds"))
-    results = results.sort_values("escalation_probability", ascending=False).reset_index(drop=True)
+    results = results.sort_values("improve_probability", ascending=True).reset_index(drop=True)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     out_path = os.path.join(OUT_DIR, "latest_predictions.csv")
@@ -143,9 +144,9 @@ def main():
 
     print(f"As-of week: {as_of_week_g.date()}")
     print(f"Wrote {len(results)} dyad predictions to {out_path}")
-    print("\nMost escalation-leaning dyads:")
+    print("\nMost likely to WORSEN or stay flat (lowest improve probability):")
     print(results.head(10).to_string(index=False))
-    print("\nMost de-escalation-leaning dyads:")
+    print("\nMost likely to IMPROVE:")
     print(results.tail(10).to_string(index=False))
 
 

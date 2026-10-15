@@ -66,3 +66,9 @@ M49 = {
     "YEM": 887,
     "USA": 842,
 }
+
+# ---- weekly trade forecasting model (make_training_samples.py, train_trade_transformer.py)
+WEEKLY_GDELT = ROOT / "data" / "risk_panel.csv"  # dyad-week GDELT among the 20 MENA countries
+UCDP_WEEK = ROOT / "data" / "ucdp_country_week.csv"  # build_ucdp_country_week.py
+GDELT_MONTH = ROOT / "data" / "gdelt" / "gdelt_country_month.csv"  # fetch_gdelt.py
+MENA20 = [p for p in PARTNERS if p != "USA"]  # USA is not in the weekly GDELT panel
