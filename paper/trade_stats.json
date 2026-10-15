@@ -1,0 +1,1440 @@
+{
+ "data": {
+  "imf_rows": 9681,
+  "imf_start": "2017-01",
+  "imf_end": "2026-06",
+  "n_partners": 21,
+  "china_totals_bn_2024": {
+   "exports": 3580.263,
+   "imports": 2587.04
+  },
+  "missing_import_months": {
+   "DJI": 2,
+   "LBY": 1,
+   "PSE": 13
+  },
+  "mirror_derived_partners": [
+   "ARE",
+   "DJI",
+   "IRN",
+   "IRQ",
+   "LBY",
+   "YEM"
+  ],
+  "mirror_share_status_e": 0.097,
+  "gdelt_month_start": "201701",
+  "gdelt_month_end": "202610",
+  "gdelt_month_rows": 2478,
+  "gdelt_week_start": "2014-12-29",
+  "gdelt_week_end": "2026-09-21",
+  "portwatch": {
+   "start": "2019-01-01",
+   "end": "2026-10-11",
+   "days": 2841,
+   "hormuz_tankers_per_day_2019_2025": 50.214,
+   "hormuz_tankers_per_day_jan_feb_2026": 36.983,
+   "hormuz_tankers_per_day_since_mar_2026": 2.522,
+   "first_day_below_5": "2026-03-02",
+   "hormuz_tankers_per_day_last_28d": 0.821
+  }
+ },
+ "shock": {
+  "violent_events_per_week_jan_feb_2026": 3766.429,
+  "peak_week": "2026-03-02",
+  "peak_violent_events": 30352,
+  "peak_ratio": 8.059,
+  "import_change_q2_2026_vs_q2_2025": {
+   "IRQ": -0.886,
+   "KWT": -0.83,
+   "QAT": -0.883,
+   "ARE": -0.753,
+   "SAU": 0.118,
+   "OMN": -0.203,
+   "IRN": -0.764,
+   "BHR": -0.951,
+   "USA": 0.18,
+   "TUR": 0.17,
+   "ISR": -0.094,
+   "EGY": 0.577,
+   "G001": 0.296
+  },
+  "implied_dependence": {
+   "IRQ": 0.914,
+   "KWT": 0.928,
+   "QAT": 0.962,
+   "ARE": 1.012,
+   "SAU": -0.139,
+   "OMN": 0.229
+  },
+  "monthly_change_2026": {
+   "IRQ": {
+    "m3": -0.548,
+    "m4": -0.897,
+    "m5": -0.938,
+    "m6": -0.821
+   },
+   "KWT": {
+    "m3": -0.589,
+    "m4": -0.723,
+    "m5": -0.998,
+    "m6": -0.822
+   },
+   "QAT": {
+    "m3": -0.503,
+    "m4": -0.853,
+    "m5": -0.954,
+    "m6": -0.847
+   },
+   "ARE": {
+    "m3": -0.183,
+    "m4": -0.696,
+    "m5": -0.713,
+    "m6": -0.859
+   },
+   "SAU": {
+    "m3": -0.355,
+    "m4": 0.274,
+    "m5": 0.459,
+    "m6": -0.277
+   },
+   "OMN": {
+    "m3": 0.253,
+    "m4": 0.082,
+    "m5": 0.003,
+    "m6": -0.761
+   },
+   "IRN": {
+    "m3": -0.487,
+    "m4": -0.558,
+    "m5": -0.811,
+    "m6": -0.897
+   },
+   "BHR": {
+    "m3": 2.527,
+    "m4": -0.959,
+    "m5": -0.834,
+    "m6": -0.952
+   },
+   "USA": {
+    "m3": 0.012,
+    "m4": 0.09,
+    "m5": 0.203,
+    "m6": 0.257
+   },
+   "TUR": {
+    "m3": 0.378,
+    "m4": 0.118,
+    "m5": 0.138,
+    "m6": 0.255
+   },
+   "ISR": {
+    "m3": 0.477,
+    "m4": 0.222,
+    "m5": -0.285,
+    "m6": -0.105
+   },
+   "EGY": {
+    "m3": 0.294,
+    "m4": 1.18,
+    "m5": 0.05,
+    "m6": 0.67
+   },
+   "G001": {
+    "m3": 0.277,
+    "m4": 0.252,
+    "m5": 0.275,
+    "m6": 0.363
+   }
+  }
+ },
+ "exposure": {
+  "total_bn_low": 79.705,
+  "total_bn_high": 107.068,
+  "share_of_china_imports_low": 0.031,
+  "share_of_china_imports_high": 0.041,
+  "china_imports_2024_bn": 2587.04,
+  "by_country": {
+   "SAU": {
+    "energy_bn": 48.823,
+    "hormuz_exposed_bn_low": 3.906,
+    "hormuz_exposed_bn_high": 21.97,
+    "hormuz_exposed_share_partner_imports_low": 0.068,
+    "hormuz_exposed_share_partner_imports_high": 0.382
+   },
+   "IRQ": {
+    "energy_bn": 37.051,
+    "hormuz_exposed_bn_low": 32.607,
+    "hormuz_exposed_bn_high": 37.051,
+    "hormuz_exposed_share_partner_imports_low": 0.853,
+    "hormuz_exposed_share_partner_imports_high": 0.97
+   },
+   "OMN": {
+    "energy_bn": 27.422,
+    "hormuz_exposed_bn_low": 0.0,
+    "hormuz_exposed_bn_high": 0.0,
+    "hormuz_exposed_share_partner_imports_low": 0.0,
+    "hormuz_exposed_share_partner_imports_high": 0.0
+   },
+   "ARE": {
+    "energy_bn": 26.914,
+    "hormuz_exposed_bn_low": 14.555,
+    "hormuz_exposed_bn_high": 19.41,
+    "hormuz_exposed_share_partner_imports_low": 0.402,
+    "hormuz_exposed_share_partner_imports_high": 0.536
+   },
+   "USA": {
+    "energy_bn": 20.059,
+    "hormuz_exposed_bn_low": 0.0,
+    "hormuz_exposed_bn_high": 0.0,
+    "hormuz_exposed_share_partner_imports_low": 0.0,
+    "hormuz_exposed_share_partner_imports_high": 0.0
+   },
+   "QAT": {
+    "energy_bn": 18.391,
+    "hormuz_exposed_bn_low": 18.391,
+    "hormuz_exposed_bn_high": 18.391,
+    "hormuz_exposed_share_partner_imports_low": 0.918,
+    "hormuz_exposed_share_partner_imports_high": 0.918
+   },
+   "KWT": {
+    "energy_bn": 10.246,
+    "hormuz_exposed_bn_low": 10.246,
+    "hormuz_exposed_bn_high": 10.246,
+    "hormuz_exposed_share_partner_imports_low": 0.894,
+    "hormuz_exposed_share_partner_imports_high": 0.894
+   },
+   "LBY": {
+    "energy_bn": 1.142,
+    "hormuz_exposed_bn_low": 0.0,
+    "hormuz_exposed_bn_high": 0.0,
+    "hormuz_exposed_share_partner_imports_low": 0.0,
+    "hormuz_exposed_share_partner_imports_high": 0.0
+   }
+  },
+  "parameters": {
+   "SAU": {
+    "dep_crude_low": 0.08,
+    "dep_crude_high": 0.45,
+    "dep_gas_low": 0.08,
+    "dep_gas_high": 0.45,
+    "confidence": "medium"
+   },
+   "ARE": {
+    "dep_crude_low": 0.44,
+    "dep_crude_high": 0.66,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "medium"
+   },
+   "IRQ": {
+    "dep_crude_low": 0.88,
+    "dep_crude_high": 1.0,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "high"
+   },
+   "KWT": {
+    "dep_crude_low": 1.0,
+    "dep_crude_high": 1.0,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "high"
+   },
+   "QAT": {
+    "dep_crude_low": 1.0,
+    "dep_crude_high": 1.0,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "high"
+   },
+   "BHR": {
+    "dep_crude_low": 1.0,
+    "dep_crude_high": 1.0,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "medium"
+   },
+   "IRN": {
+    "dep_crude_low": 0.88,
+    "dep_crude_high": 1.0,
+    "dep_gas_low": 1.0,
+    "dep_gas_high": 1.0,
+    "confidence": "medium"
+   },
+   "OMN": {
+    "dep_crude_low": 0.0,
+    "dep_crude_high": 0.0,
+    "dep_gas_low": 0.0,
+    "dep_gas_high": 0.0,
+    "confidence": "medium"
+   }
+  },
+  "n_exposed_partners": 6
+ },
+ "regression": {
+  "cumulative": [
+   {
+    "spec": "A",
+    "outcome": "imp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.192,
+    "se_2way": 0.239,
+    "p_2way": 0.43,
+    "p_month": 0.111,
+    "p_dk": 0.077,
+    "p_perm": null,
+    "note": "2way V not PSD: eigenvalues clipped"
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.446,
+    "se_2way": 0.107,
+    "p_2way": 0.001,
+    "p_month": 0.0,
+    "p_dk": 0.008,
+    "p_perm": 0.004,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.491,
+    "se_2way": 0.111,
+    "p_2way": 0.0,
+    "p_month": 0.0,
+    "p_dk": 0.007,
+    "p_perm": 0.004,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "exp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.047,
+    "se_2way": 0.038,
+    "p_2way": 0.234,
+    "p_month": 0.036,
+    "p_dk": 0.189,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.209,
+    "se_2way": 0.067,
+    "p_2way": 0.006,
+    "p_month": 0.001,
+    "p_dk": 0.036,
+    "p_perm": 0.015,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "0-1-2-3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.225,
+    "se_2way": 0.068,
+    "p_2way": 0.004,
+    "p_month": 0.001,
+    "p_dk": 0.027,
+    "p_perm": 0.011,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "start 2023",
+    "n": 878,
+    "n_country": 21,
+    "n_month": 42,
+    "beta": -0.395,
+    "se_2way": 0.125,
+    "p_2way": 0.005,
+    "p_month": 0.002,
+    "p_dk": 0.028,
+    "p_perm": 0.028,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "pre-2026 (no Hormuz shock)",
+    "n": 1993,
+    "n_country": 21,
+    "n_month": 96,
+    "beta": -0.075,
+    "se_2way": 0.113,
+    "p_2way": 0.51,
+    "p_month": 0.441,
+    "p_dk": 0.533,
+    "p_perm": 0.739,
+    "note": "2way V not PSD: eigenvalues clipped"
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "excl USA",
+    "n": 2015,
+    "n_country": 20,
+    "n_month": 102,
+    "beta": -0.441,
+    "se_2way": 0.109,
+    "p_2way": 0.001,
+    "p_month": 0.0,
+    "p_dk": 0.009,
+    "p_perm": 0.004,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "excl SYR SDN YEM LBY",
+    "n": 1711,
+    "n_country": 17,
+    "n_month": 102,
+    "beta": -0.382,
+    "se_2way": 0.137,
+    "p_2way": 0.013,
+    "p_month": 0.005,
+    "p_dk": 0.069,
+    "p_perm": 0.017,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "excl IRN ARE (sanctions / re-export)",
+    "n": 1913,
+    "n_country": 19,
+    "n_month": 102,
+    "beta": -0.457,
+    "se_2way": 0.11,
+    "p_2way": 0.001,
+    "p_month": 0.0,
+    "p_dk": 0.008,
+    "p_perm": 0.005,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "import flows >= $100m in 2024",
+    "n": 1528,
+    "n_country": 15,
+    "n_month": 102,
+    "beta": -0.379,
+    "se_2way": 0.127,
+    "p_2way": 0.009,
+    "p_month": 0.002,
+    "p_dk": 0.031,
+    "p_perm": 0.018,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf_conf",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "shock = conflict_share",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.39,
+    "se_2way": 0.151,
+    "p_2way": 0.018,
+    "p_month": 0.004,
+    "p_dk": 0.044,
+    "p_perm": 0.111,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf_wide",
+    "exposure": "high",
+    "lag": "0-1-2-3",
+    "sample": "shock incl ISR YEM",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.326,
+    "se_2way": 0.139,
+    "p_2way": 0.029,
+    "p_month": 0.017,
+    "p_dk": 0.116,
+    "p_perm": 0.058,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "oman_1",
+    "lag": "0-1-2-3",
+    "sample": "Oman dependence = 1",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.375,
+    "se_2way": 0.117,
+    "p_2way": 0.005,
+    "p_month": 0.0,
+    "p_dk": 0.011,
+    "p_perm": 0.011,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "saudi_0.8",
+    "lag": "0-1-2-3",
+    "sample": "Saudi dependence = 0.8",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.402,
+    "se_2way": 0.109,
+    "p_2way": 0.002,
+    "p_month": 0.0,
+    "p_dk": 0.008,
+    "p_perm": 0.006,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "energy_share_no_dep",
+    "lag": "0-1-2-3",
+    "sample": "energy share, no route parameters",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.226,
+    "se_2way": 0.124,
+    "p_2way": 0.085,
+    "p_month": 0.024,
+    "p_dk": 0.045,
+    "p_perm": 0.087,
+    "note": "2way V not PSD: eigenvalues clipped"
+   }
+  ],
+  "by_lag_main": [
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.279,
+    "se_2way": 0.05,
+    "p_2way": 0.0,
+    "p_month": 0.0,
+    "p_dk": 0.0,
+    "p_perm": 0.012,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "1",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.247,
+    "se_2way": 0.083,
+    "p_2way": 0.007,
+    "p_month": 0.008,
+    "p_dk": 0.008,
+    "p_perm": 0.011,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "2",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.313,
+    "se_2way": 0.108,
+    "p_2way": 0.009,
+    "p_month": 0.009,
+    "p_dk": 0.024,
+    "p_perm": 0.003,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.131,
+    "se_2way": 0.053,
+    "p_2way": 0.024,
+    "p_month": 0.037,
+    "p_dk": 0.085,
+    "p_perm": 0.082,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "0",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.292,
+    "se_2way": 0.054,
+    "p_2way": 0.0,
+    "p_month": 0.0,
+    "p_dk": 0.0,
+    "p_perm": 0.016,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "1",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.278,
+    "se_2way": 0.088,
+    "p_2way": 0.005,
+    "p_month": 0.008,
+    "p_dk": 0.007,
+    "p_perm": 0.008,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "2",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.36,
+    "se_2way": 0.119,
+    "p_2way": 0.007,
+    "p_month": 0.007,
+    "p_dk": 0.019,
+    "p_perm": 0.003,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "imp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.147,
+    "se_2way": 0.056,
+    "p_2way": 0.016,
+    "p_month": 0.027,
+    "p_dk": 0.065,
+    "p_perm": 0.07,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "0",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.16,
+    "se_2way": 0.044,
+    "p_2way": 0.002,
+    "p_month": 0.0,
+    "p_dk": 0.011,
+    "p_perm": 0.005,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "1",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.15,
+    "se_2way": 0.045,
+    "p_2way": 0.004,
+    "p_month": 0.002,
+    "p_dk": 0.027,
+    "p_perm": 0.003,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "2",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.083,
+    "se_2way": 0.036,
+    "p_2way": 0.034,
+    "p_month": 0.024,
+    "p_dk": 0.107,
+    "p_perm": 0.032,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "high",
+    "lag": "3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.048,
+    "se_2way": 0.037,
+    "p_2way": 0.209,
+    "p_month": 0.213,
+    "p_dk": 0.251,
+    "p_perm": 0.133,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "0",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.173,
+    "se_2way": 0.046,
+    "p_2way": 0.001,
+    "p_month": 0.0,
+    "p_dk": 0.007,
+    "p_perm": 0.006,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "1",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.161,
+    "se_2way": 0.046,
+    "p_2way": 0.002,
+    "p_month": 0.001,
+    "p_dk": 0.02,
+    "p_perm": 0.003,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "2",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.089,
+    "se_2way": 0.036,
+    "p_2way": 0.021,
+    "p_month": 0.015,
+    "p_dk": 0.083,
+    "p_perm": 0.027,
+    "note": null
+   },
+   {
+    "spec": "B",
+    "outcome": "exp_dlog12",
+    "shock": "gulf",
+    "exposure": "low",
+    "lag": "3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.05,
+    "se_2way": 0.036,
+    "p_2way": 0.179,
+    "p_month": 0.186,
+    "p_dk": 0.221,
+    "p_perm": 0.13,
+    "note": null
+   }
+  ],
+  "own_conflict_by_lag": [
+   {
+    "spec": "A",
+    "outcome": "imp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "0",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.145,
+    "se_2way": 0.206,
+    "p_2way": 0.491,
+    "p_month": 0.148,
+    "p_dk": 0.083,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "imp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "1",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.129,
+    "se_2way": 0.173,
+    "p_2way": 0.465,
+    "p_month": 0.218,
+    "p_dk": 0.207,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "imp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "2",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.127,
+    "se_2way": 0.153,
+    "p_2way": 0.416,
+    "p_month": 0.204,
+    "p_dk": 0.201,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "imp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "3",
+    "sample": "all",
+    "n": 2117,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.15,
+    "se_2way": 0.17,
+    "p_2way": 0.387,
+    "p_month": 0.145,
+    "p_dk": 0.128,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "exp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "0",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.038,
+    "se_2way": 0.032,
+    "p_2way": 0.254,
+    "p_month": 0.12,
+    "p_dk": 0.284,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "exp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "1",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.045,
+    "se_2way": 0.033,
+    "p_2way": 0.181,
+    "p_month": 0.06,
+    "p_dk": 0.199,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "exp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "2",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.043,
+    "se_2way": 0.029,
+    "p_2way": 0.157,
+    "p_month": 0.024,
+    "p_dk": 0.117,
+    "p_perm": null,
+    "note": null
+   },
+   {
+    "spec": "A",
+    "outcome": "exp_dlog12",
+    "shock": "c_z",
+    "exposure": null,
+    "lag": "3",
+    "sample": "all",
+    "n": 2142,
+    "n_country": 21,
+    "n_month": 102,
+    "beta": -0.02,
+    "se_2way": 0.028,
+    "p_2way": 0.466,
+    "p_month": 0.236,
+    "p_dk": 0.358,
+    "p_perm": null,
+    "note": null
+   }
+  ]
+ },
+ "baseline": {
+  "k": {
+   "imp": 0.236,
+   "exp": 0.38
+  },
+  "pub_lag_days": 100,
+  "origin": "2026-10-12",
+  "trade_data_end": "2026-06",
+  "interval_80_log_quantiles": {
+   "imp": [
+    -0.767,
+    0.554
+   ],
+   "exp": [
+    -0.258,
+    0.348
+   ]
+  },
+  "hormuz": "Hormuz tanker transits, 4 weeks to 2026-10-05: 6/week = 2% of the 2019-2025 average (351/week)",
+  "walk_forward_k": {
+   "2020": [
+    0.264,
+    0.484
+   ],
+   "2021": [
+    0.275,
+    0.408
+   ],
+   "2022": [
+    0.274,
+    0.402
+   ],
+   "2023": [
+    0.227,
+    0.438
+   ],
+   "2024": [
+    0.212,
+    0.356
+   ],
+   "2025": [
+    0.237,
+    0.339
+   ],
+   "2026": [
+    0.243,
+    0.354
+   ]
+  },
+  "backtest_all": {
+   "imf": {
+    "imp": {
+     "n": 4787,
+     "skill_vs_zero": 0.057,
+     "r2": 0.048,
+     "mae_model": 0.386,
+     "mae_zero": 0.4,
+     "direction_hit": 0.59,
+     "coverage_80": 0.71
+    },
+    "exp": {
+     "n": 6454,
+     "skill_vs_zero": 0.11,
+     "r2": 0.062,
+     "mae_model": 0.212,
+     "mae_zero": 0.23,
+     "direction_hit": 0.655,
+     "coverage_80": 0.792
+    }
+   },
+   "customs": {
+    "imp": {
+     "n": 4775,
+     "skill_vs_zero": 0.088,
+     "r2": 0.082,
+     "mae_model": 0.364,
+     "mae_zero": 0.396,
+     "direction_hit": 0.646,
+     "coverage_80": 0.732
+    },
+    "exp": {
+     "n": 6464,
+     "skill_vs_zero": 0.199,
+     "r2": 0.155,
+     "mae_model": 0.193,
+     "mae_zero": 0.23,
+     "direction_hit": 0.719,
+     "coverage_80": 0.796
+    }
+   }
+  },
+  "backtest_by_year_imf": [
+   {
+    "year": "2020",
+    "flow": "exp",
+    "k": 0.484,
+    "skill_vs_zero": 0.021,
+    "r2": 0.019,
+    "coverage_80": null
+   },
+   {
+    "year": "2020",
+    "flow": "imp",
+    "k": 0.264,
+    "skill_vs_zero": 0.134,
+    "r2": -0.059,
+    "coverage_80": null
+   },
+   {
+    "year": "2021",
+    "flow": "exp",
+    "k": 0.408,
+    "skill_vs_zero": 0.275,
+    "r2": 0.184,
+    "coverage_80": 0.802
+   },
+   {
+    "year": "2021",
+    "flow": "imp",
+    "k": 0.275,
+    "skill_vs_zero": 0.084,
+    "r2": -0.318,
+    "coverage_80": 0.394
+   },
+   {
+    "year": "2022",
+    "flow": "exp",
+    "k": 0.402,
+    "skill_vs_zero": 0.217,
+    "r2": -0.217,
+    "coverage_80": 0.841
+   },
+   {
+    "year": "2022",
+    "flow": "imp",
+    "k": 0.274,
+    "skill_vs_zero": 0.0,
+    "r2": -0.026,
+    "coverage_80": 0.758
+   },
+   {
+    "year": "2023",
+    "flow": "exp",
+    "k": 0.438,
+    "skill_vs_zero": -0.029,
+    "r2": -0.05,
+    "coverage_80": 0.766
+   },
+   {
+    "year": "2023",
+    "flow": "imp",
+    "k": 0.227,
+    "skill_vs_zero": 0.038,
+    "r2": -0.236,
+    "coverage_80": 0.817
+   },
+   {
+    "year": "2024",
+    "flow": "exp",
+    "k": 0.356,
+    "skill_vs_zero": -0.026,
+    "r2": -0.032,
+    "coverage_80": 0.845
+   },
+   {
+    "year": "2024",
+    "flow": "imp",
+    "k": 0.212,
+    "skill_vs_zero": 0.074,
+    "r2": -0.11,
+    "coverage_80": 0.838
+   },
+   {
+    "year": "2025",
+    "flow": "exp",
+    "k": 0.339,
+    "skill_vs_zero": 0.178,
+    "r2": -0.325,
+    "coverage_80": 0.774
+   },
+   {
+    "year": "2025",
+    "flow": "imp",
+    "k": 0.237,
+    "skill_vs_zero": 0.096,
+    "r2": 0.09,
+    "coverage_80": 0.75
+   },
+   {
+    "year": "2026",
+    "flow": "exp",
+    "k": 0.354,
+    "skill_vs_zero": 0.088,
+    "r2": 0.064,
+    "coverage_80": 0.508
+   },
+   {
+    "year": "2026",
+    "flow": "imp",
+    "k": 0.243,
+    "skill_vs_zero": -0.067,
+    "r2": -0.115,
+    "coverage_80": 0.604
+   }
+  ],
+  "forecast_selected": {
+   "IRQ": {
+    "imp_forecast_pct": -37.7,
+    "imp_lo80_pct": -71.1,
+    "imp_hi80_pct": 8.5,
+    "imp_latest_3m_pct": -86.5,
+    "exp_forecast_pct": -28.3,
+    "exp_lo80_pct": -44.6,
+    "exp_hi80_pct": 1.5,
+    "exp_latest_3m_pct": -58.3
+   },
+   "KWT": {
+    "imp_forecast_pct": -34.1,
+    "imp_lo80_pct": -69.4,
+    "imp_hi80_pct": 14.6,
+    "imp_latest_3m_pct": -82.9,
+    "exp_forecast_pct": -26.5,
+    "exp_lo80_pct": -43.2,
+    "exp_hi80_pct": 4.1,
+    "exp_latest_3m_pct": -55.4
+   },
+   "QAT": {
+    "imp_forecast_pct": -37.7,
+    "imp_lo80_pct": -71.1,
+    "imp_hi80_pct": 8.5,
+    "imp_latest_3m_pct": -86.5,
+    "exp_forecast_pct": -27.3,
+    "exp_lo80_pct": -43.8,
+    "exp_hi80_pct": 2.9,
+    "exp_latest_3m_pct": -56.8
+   },
+   "ARE": {
+    "imp_forecast_pct": -28.1,
+    "imp_lo80_pct": -66.6,
+    "imp_hi80_pct": 25.1,
+    "imp_latest_3m_pct": -75.2,
+    "exp_forecast_pct": -19.6,
+    "exp_lo80_pct": -37.9,
+    "exp_hi80_pct": 13.8,
+    "exp_latest_3m_pct": -43.7
+   },
+   "SAU": {
+    "imp_forecast_pct": 2.7,
+    "imp_lo80_pct": -52.3,
+    "imp_hi80_pct": 78.7,
+    "imp_latest_3m_pct": 11.8,
+    "exp_forecast_pct": -7.5,
+    "exp_lo80_pct": -28.5,
+    "exp_hi80_pct": 31.0,
+    "exp_latest_3m_pct": -18.5
+   },
+   "OMN": {
+    "imp_forecast_pct": -5.2,
+    "imp_lo80_pct": -56.0,
+    "imp_hi80_pct": 65.0,
+    "imp_latest_3m_pct": -20.3,
+    "exp_forecast_pct": 20.7,
+    "exp_lo80_pct": -6.7,
+    "exp_hi80_pct": 71.0,
+    "exp_latest_3m_pct": 64.2
+   },
+   "TUR": {
+    "imp_forecast_pct": 3.8,
+    "imp_lo80_pct": -51.8,
+    "imp_hi80_pct": 80.6,
+    "imp_latest_3m_pct": 16.9,
+    "exp_forecast_pct": 4.0,
+    "exp_lo80_pct": -19.6,
+    "exp_hi80_pct": 47.2,
+    "exp_latest_3m_pct": 10.8
+   },
+   "EGY": {
+    "imp_forecast_pct": 11.2,
+    "imp_lo80_pct": -48.4,
+    "imp_hi80_pct": 93.6,
+    "imp_latest_3m_pct": 56.9,
+    "exp_forecast_pct": 6.2,
+    "exp_lo80_pct": -17.9,
+    "exp_hi80_pct": 50.3,
+    "exp_latest_3m_pct": 17.0
+   }
+  }
+ },
+ "transformer": {
+  "params": 45714,
+  "d_model": 32,
+  "heads": 4,
+  "ff_dim": 64,
+  "temporal_blocks": 2,
+  "context_blocks": 2,
+  "seeds": 5,
+  "val_mse": {
+   "full": 0.133,
+   "no_context": 0.149,
+   "trade_only": 0.132,
+   "residual": 0.149
+  },
+  "test": {
+   "test_all": {
+    "country_mean": {
+     "exp": -0.095,
+     "imp": -0.036
+    },
+    "lightgbm": {
+     "exp": -0.042,
+     "imp": 0.032
+    },
+    "persistence_3m": {
+     "exp": 0.3,
+     "imp": -0.068
+    },
+    "persistence_shrunk": {
+     "exp": 0.28,
+     "imp": 0.171
+    },
+    "transformer_full": {
+     "exp": 0.016,
+     "imp": 0.083
+    },
+    "transformer_no_context": {
+     "exp": 0.091,
+     "imp": 0.151
+    },
+    "transformer_residual": {
+     "exp": 0.187,
+     "imp": 0.187
+    },
+    "transformer_trade_only": {
+     "exp": -0.007,
+     "imp": 0.046
+    },
+    "zero": {
+     "exp": 0.0,
+     "imp": -0.0
+    }
+   },
+   "test_2025": {
+    "country_mean": {
+     "exp": -0.013,
+     "imp": -0.017
+    },
+    "lightgbm": {
+     "exp": 0.019,
+     "imp": 0.041
+    },
+    "persistence_3m": {
+     "exp": 0.476,
+     "imp": 0.09
+    },
+    "persistence_shrunk": {
+     "exp": 0.381,
+     "imp": 0.228
+    },
+    "transformer_full": {
+     "exp": 0.053,
+     "imp": 0.113
+    },
+    "transformer_no_context": {
+     "exp": 0.084,
+     "imp": 0.17
+    },
+    "transformer_residual": {
+     "exp": 0.24,
+     "imp": 0.243
+    },
+    "transformer_trade_only": {
+     "exp": -0.027,
+     "imp": 0.065
+    },
+    "zero": {
+     "exp": 0.0,
+     "imp": -0.0
+    }
+   },
+   "test_2026_shock": {
+    "country_mean": {
+     "exp": -0.213,
+     "imp": -0.093
+    },
+    "lightgbm": {
+     "exp": -0.13,
+     "imp": 0.005
+    },
+    "persistence_3m": {
+     "exp": 0.048,
+     "imp": -0.524
+    },
+    "persistence_shrunk": {
+     "exp": 0.135,
+     "imp": 0.005
+    },
+    "transformer_full": {
+     "exp": -0.036,
+     "imp": -0.004
+    },
+    "transformer_no_context": {
+     "exp": 0.102,
+     "imp": 0.096
+    },
+    "transformer_residual": {
+     "exp": 0.111,
+     "imp": 0.026
+    },
+    "transformer_trade_only": {
+     "exp": 0.023,
+     "imp": -0.01
+    },
+    "zero": {
+     "exp": 0.0,
+     "imp": 0.0
+    }
+   }
+  },
+  "note": "28-day publication lag; trained before the Hormuz parameter revision and the missing-month fix"
+ }
+}

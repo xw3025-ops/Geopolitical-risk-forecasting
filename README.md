@@ -248,7 +248,7 @@ Training: 5-seed ensembles, AdamW, early stopping on validation. Splits are trai
 | transformer, residual on shrunk persistence | **0.187** | 0.187 | 0.026 | 0.149 |
 
 How to read this:
-1. **No model foresaw the 2026 collapse.** At the 2026-03-02 origin, after the Gulf violence spike was already in the data, every model forecast Iraq/Kuwait/Qatar imports within ±10% of a year earlier. The realised change was −78%. Training years contain no sustained chokepoint closure, and the regression confirms that conflict had no trade effect before 2026.
+1. **No model foresaw the 2026 collapse.** At the 2026-03-02 origin, after the Gulf violence spike was already in the data, the models forecast Iraq/Kuwait/Qatar imports between −17% and +23% of a year earlier. The realised change was at least −78% (the target is capped at ±1.5 log points). Training years contain no sustained chokepoint closure, and the regression confirms that conflict had no trade effect before 2026.
 2. **Conflict inputs add no validated skill.** The trade-only ablation ties the full model on validation and test.
 3. Validation and test disagree on the best variant: contextual attention helps on validation but not on test, and the residual variant is best on test but not on validation. With about 17 independent quarters of training data, these differences are within noise. The release uses the validation choice (`trade_only`). Do not re-pick a variant using test results.
 4. Simple shrunk persistence is as good as any network. Treat it as the baseline to beat.
