@@ -338,7 +338,7 @@ def ai_summaries(bundle):
 # ---------------------------------------------------------------- news (online context for the China briefs)
 
 NEWS_DAYS = 90
-NEWS_CACHE = os.environ.get("NEWS_CACHE", "data/news_cache")  # /tmp/... in the Cloud Function
+NEWS_CACHE = "/tmp/news_cache" if os.environ.get("K_SERVICE") else "data/news_cache"  # K_SERVICE: Cloud Function
 SEARCH_NAME = {"ARE": "United Arab Emirates", "PSE": "Palestinian", "SAU": "Saudi Arabia", "TUR": "Turkey"}
 
 

@@ -87,7 +87,7 @@ gcloud functions deploy "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGIO
   --runtime=python312 --source="$BUILD" --entry-point=run_pipeline \
   --trigger-http --no-allow-unauthenticated \
   --memory=4GiB --cpu=2 --timeout=3600s \
-  --set-env-vars=MODEL_VERSION="$VERSION",SITE_BUCKET="$SITE_BUCKET",NEWS_CACHE=/tmp/news_cache \
+  --set-env-vars=MODEL_VERSION="$VERSION",SITE_BUCKET="$SITE_BUCKET" \
   $SECRETS_FLAG
 
 URL=$(gcloud functions describe "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGION" \
