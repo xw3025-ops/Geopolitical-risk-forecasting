@@ -2,8 +2,10 @@
 Build the data bundle the website reads (website/data/latest.json).
 
 One JSON file holds everything the site shows, so the site itself is static
-and every number refreshes when this script runs - locally now, and after
-each Cloud Function run once wired in (upload with --gcs).
+and every number refreshes when this bundle is rebuilt: locally with this
+script, and in production by the Cloud Function (cloud_function/main.py,
+?site=1, weekly), which calls build_bundle() and publish() to the public
+bucket the website reads.
 
 Sources
   forecasts   release v2.2 (live_pipeline.py): goldstein forecast and the
@@ -14,12 +16,12 @@ Sources
   ACLED       political-violence events of the last 28 days (event level,
               for the map) and the 4-week fatality count per country
   trade       IMF IMTS: China's exports + imports with each country over the
-              latest 12 published months (src/fetch_imf_imts.py output, or
-              BigQuery trade.imf_imts_raw once trade-refresh is deployed);
+              latest 12 published months (src/fetch_imf_imts.py output if
+              present, else BigQuery trade.imf_imts_raw, else the IMF API);
               Hormuz route dependence from data/hormuz/hormuz_dependence.csv
   lanes       IMF PortWatch daily vessel transits through Hormuz, Bab el-Mandeb,
               Suez, the Cape of Good Hope and Malacca (src/fetch_portwatch.py
-              output, or BigQuery trade.portwatch_daily once trade-refresh runs):
+              output if present, else BigQuery trade.portwatch_daily, else the API):
               last 4 complete weeks vs the pre-crisis normal (2019 - Oct 2023),
               with the risk of the states on each lane's shores
   summaries   one regional and one per-country brief, in English and Chinese,
@@ -45,6 +47,7 @@ import argparse
 import json
 import math
 import os
+import sys
 import time
 from datetime import date, datetime, timedelta, timezone
 
@@ -59,7 +62,7 @@ from risk_index import ACLED_COUNTRY, ACLED_READ_URL, acled_token
 OUT = "website/data/latest.json"
 IMF_RAW = "data/imf_imts/imts_raw.csv"
 HORMUZ = "data/hormuz/hormuz_dependence.csv"
-BUCKET = "geopolitical-risk-forecasting-models"
+SITE_BUCKET = os.environ.get("SITE_BUCKET", "geopolitical-risk-forecasting-site")  # public, read by the website
 SITE_OBJECT = "site/latest.json"
 REFRESH_WEEKS = 2
 CHART_WEEKS = 52
@@ -147,8 +150,45 @@ def severity(cv, fatalities):
 
 # ---------------------------------------------------------------- trade
 
-def trade_exposure():
-    raw = pd.read_csv(IMF_RAW)
+def _trade_sources():
+    """src/trade_sources.py (the trade-refresh function's download code); flat in the Cloud Function."""
+    try:
+        import trade_sources
+    except ImportError:
+        sys.path.insert(0, "src")
+        import trade_sources
+    return trade_sources
+
+
+def load_imf(bq):
+    if os.path.exists(IMF_RAW):
+        return pd.read_csv(IMF_RAW), "local file"
+    try:
+        raw = bq.query("SELECT * FROM `geopolitical-risk-forecasting.trade.imf_imts_raw`").to_dataframe()
+        src = "BigQuery trade.imf_imts_raw"
+    except Exception as e:
+        print(f"trade.imf_imts_raw unavailable ({str(e)[:80]}); calling the IMF API")
+        raw, src = _trade_sources().imf_imts(), "IMF API"
+    return raw.astype({"value": "float64", "period": "string"}), src
+
+
+def load_portwatch(bq):
+    """Weekly chokepoint transits (Monday weeks, complete weeks only)."""
+    if os.path.exists(PORTWATCH):
+        return pd.read_csv(PORTWATCH, parse_dates=["week_start"])
+    ts = _trade_sources()
+    try:
+        daily = bq.query("SELECT * FROM `geopolitical-risk-forecasting.trade.portwatch_daily`").to_dataframe()
+    except Exception as e:
+        print(f"trade.portwatch_daily unavailable ({str(e)[:80]}); calling the PortWatch API")
+        daily = ts.portwatch()
+    daily["date"] = pd.to_datetime(daily["date"])
+    w = ts.portwatch_weekly(daily)
+    w["week_start"] = pd.to_datetime(w["week_start"])
+    return w
+
+
+def trade_exposure(raw):
     ch = raw[(raw.side == "china") & (raw.reporter == "CHN") & raw.counterpart.isin(MENA)]
     last = ch.groupby("period").value.count()
     last = last[last >= len(MENA)].index.max()  # latest month published for every partner
@@ -298,7 +338,7 @@ def ai_summaries(bundle):
 # ---------------------------------------------------------------- news (online context for the China briefs)
 
 NEWS_DAYS = 90
-NEWS_CACHE = "data/news_cache"
+NEWS_CACHE = os.environ.get("NEWS_CACHE", "data/news_cache")  # /tmp/... in the Cloud Function
 SEARCH_NAME = {"ARE": "United Arab Emirates", "PSE": "Palestinian", "SAU": "Saudi Arabia", "TUR": "Turkey"}
 
 
@@ -484,12 +524,10 @@ ZH_NAMES = {
 
 # ---------------------------------------------------------------- shipping lanes
 
-def shipping_lanes(countries, trade):
+def shipping_lanes(countries, trade, w):
     """Transits through each chokepoint, last 4 complete weeks vs the pre-crisis normal (2019 - Oct 2023,
     before the Red Sea attacks), and the risk of the states on its shores."""
-    try:
-        w = pd.read_csv(PORTWATCH, parse_dates=["week_start"])
-    except FileNotFoundError:
+    if w is None or w.empty:
         return None, None
     risk = {c["iso3"]: c for c in countries}
     hz = pd.read_csv(HORMUZ).set_index("iso3")
@@ -543,19 +581,18 @@ def model_performance():
 
 # ---------------------------------------------------------------- bundle
 
-def build(args):
-    from google.cloud import bigquery
-    bq = bigquery.Client(project="geopolitical-risk-forecasting")
-    as_of = date.fromisoformat(args.as_of) if args.as_of else \
-        list(bq.query("SELECT MAX(week_start) w FROM `geopolitical-risk-forecasting.1.1`").result())[0].w
+def build_bundle(bq, models, as_of=None, use_acled=True, use_ai=True):
+    """The whole site bundle as of the latest week in table 1.1 (or `as_of`)."""
+    as_of = as_of or list(bq.query("SELECT MAX(week_start) w FROM `geopolitical-risk-forecasting.1.1`").result())[0].w
     print(f"as-of week {as_of}", flush=True)
-    models = lp.load_models(".")
     now, prev, p = forecasts(bq, models, as_of)
     cv_now, vol = country_view(now, p)
     cv_prev, _ = country_view(prev, p)
-    trade, trade_meta = trade_exposure()
+    imf, imf_src = load_imf(bq)
+    trade, trade_meta = trade_exposure(imf)
+    trade_meta["loaded_from"] = imf_src
     acled, acled_meta = (None, None)
-    if not args.no_acled and os.environ.get("ACLED_EMAIL"):
+    if use_acled and os.environ.get("ACLED_EMAIL"):
         try:
             acled, acled_meta = acled_recent(as_of + timedelta(days=6))
         except Exception as e:  # the site still builds without the overlay
@@ -639,12 +676,17 @@ def build(args):
         countries=countries, threads=threads, dyads=dyads)
 
     bundle["meta"]["performance"] = model_performance()
-    bundle["lanes"], bundle["meta"]["lanes"] = shipping_lanes(countries, trade)
+    try:
+        weekly = load_portwatch(bq)
+    except Exception as e:  # the site still builds without the lanes
+        print(f"PortWatch skipped: {e}")
+        weekly = None
+    bundle["lanes"], bundle["meta"]["lanes"] = shipping_lanes(countries, trade, weekly)
     for c in bundle["countries"]:
         c["name_zh"] = ZH_NAMES[c["iso3"]]
 
     summaries, prov = None, None
-    if not args.no_ai:
+    if use_ai:
         try:
             summaries, prov = ai_summaries(bundle)
         except Exception as e:
@@ -678,28 +720,45 @@ def _clean(x):
     return x
 
 
+def to_json(bundle):
+    return json.dumps(_clean(bundle), separators=(",", ":"), allow_nan=False)
+
+
+def publish(text, as_of, bucket=SITE_BUCKET):
+    """Upload to the public site bucket: site/latest.json (what the website reads) and an archive copy.
+    Stored gzip-encoded (~0.2 MB instead of 1.3 MB per visit); browsers get it decompressed."""
+    import gzip
+    from google.cloud import storage
+    b = storage.Client().bucket(bucket)
+    body = gzip.compress(text.encode("utf-8"))
+    for name, cache in ((SITE_OBJECT, "public, max-age=300"), (f"site/archive/{as_of}.json", "public, max-age=86400")):
+        blob = b.blob(name)
+        blob.cache_control, blob.content_encoding = cache, "gzip"
+        blob.upload_from_string(body, content_type="application/json")
+    return f"https://storage.googleapis.com/{bucket}/{SITE_OBJECT}"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--as-of")
     ap.add_argument("--no-acled", action="store_true")
     ap.add_argument("--no-ai", action="store_true")
-    ap.add_argument("--gcs", action="store_true", help=f"also upload to gs://{BUCKET}/{SITE_OBJECT}")
+    ap.add_argument("--gcs", action="store_true", help=f"also publish to gs://{SITE_BUCKET}/{SITE_OBJECT}")
     args = ap.parse_args()
     from dotenv import load_dotenv
+    from google.cloud import bigquery
     load_dotenv()
-    bundle = build(args)
+    bq = bigquery.Client(project="geopolitical-risk-forecasting")
+    bundle = build_bundle(bq, lp.load_models("."), date.fromisoformat(args.as_of) if args.as_of else None,
+                          use_acled=not args.no_acled, use_ai=not args.no_ai)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    text = json.dumps(_clean(bundle), separators=(",", ":"), allow_nan=False)
-    open(OUT, "w").write(text)
+    text = to_json(bundle)
+    open(OUT, "w", encoding="utf-8").write(text)
     print(f"wrote {OUT} ({len(text) / 1e6:.2f} MB); summaries: {bundle['summaries']['provenance']}")
     for c in bundle["countries"][:5]:
         print(f"  #{c['rank']} {c['name']:<22} risk {c['risk']:5.1f}  severity {c['severity']:5.1f}  exposure {c['exposure']:5.1f}")
     if args.gcs:
-        from google.cloud import storage
-        blob = storage.Client().bucket(BUCKET).blob(SITE_OBJECT)
-        blob.cache_control = "public, max-age=300"
-        blob.upload_from_string(text, content_type="application/json")
-        print(f"uploaded gs://{BUCKET}/{SITE_OBJECT}")
+        print(f"published {publish(text, bundle['meta']['as_of_week'])}")
 
 
 if __name__ == "__main__":

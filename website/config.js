@@ -1,7 +1,8 @@
-// Where the site reads its data. Locally: the file build_site_data.py writes.
-// In production: the bundle the Cloud Function publishes after each refresh
-// (set at publish time, e.g. "https://storage.googleapis.com/<public-bucket>/site/latest.json").
+// Where the site reads its data. dataUrl: the bundle the Cloud Function publishes after each
+// refresh (cloud_function/main.py, ?site=1). fallbackUrl: the copy committed with the site
+// (build_site_data.py), used when dataUrl cannot be reached - and when previewing locally.
 window.SITE_CONFIG = {
-  dataUrl: "data/latest.json",
+  dataUrl: "https://storage.googleapis.com/geopolitical-risk-forecasting-site/site/latest.json",
+  fallbackUrl: "data/latest.json",
   mapUrl: "vendor/countries-50m.json",
 };

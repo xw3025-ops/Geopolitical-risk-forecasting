@@ -158,10 +158,20 @@ const fracColor = (f) => C.ramp(Math.max(0, Math.min(1, f)));
 const topByMetric = (n) => [...S.data.countries].sort((a, b) => metricT(b) - metricT(a)).slice(0, n).map((c) => c.iso3);
 
 // ------------------------------------------------------------ boot
+const getJson = (url) => fetch(url, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); });
+// live bundle first; the committed copy if it is unreachable (or when previewing locally: ?local)
+async function loadData() {
+  const local = /localhost|127\.0\.0\.1/.test(location.hostname) || new URLSearchParams(location.search).has("local");
+  if (!local || !CFG.fallbackUrl) {
+    try { return await getJson(CFG.dataUrl); } catch (e) { if (!CFG.fallbackUrl) throw e; console.warn("live data unavailable, using bundled copy", e); }
+  }
+  return getJson(CFG.fallbackUrl);
+}
+
 async function init() {
   try {
     const [data, world] = await Promise.all([
-      fetch(CFG.dataUrl, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      loadData(),
       fetch(CFG.mapUrl).then((r) => r.json()),
     ]);
     S.data = data;

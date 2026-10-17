@@ -23,11 +23,19 @@ Every run (triggered by Cloud Scheduler; HTTP, not public):
 
 Re-running a week replaces that week's rows (no duplicates).
 
+Website (?site=1, its own weekly Scheduler job, after this run and trade-refresh):
+  build the site bundle (build_site_data.build_bundle: forecasts recomputed from
+  table 1.1 with the same release models, ACLED events, IMF trade and PortWatch
+  from BigQuery trade.*, Guardian/NYT news, DeepSeek briefs) and publish it to
+  gs://$SITE_BUCKET/site/latest.json, which the website reads on every visit.
+  Ignores the every-2-weeks rule; trade and shipping refresh weekly.
+
 Cadence: Cloud Scheduler fires weekly; the function works only every other
 week (counted from REFRESH_ANCHOR_MONDAY). Call with ?force=1 to run
 regardless (e.g. right after a deploy).
 
-Secrets: ACLED_EMAIL / ACLED_PASSWORD come from Secret Manager (deploy.sh).
+Secrets (Secret Manager, attached by deploy.sh when present): ACLED_EMAIL / ACLED_PASSWORD;
+for the website briefs also DEEPSEEK_API_KEY, GUARDIAN_API_KEY, NYT_API_KEY.
 """
 
 import json
@@ -103,9 +111,30 @@ def run_risk(bq, df, results, as_of):
     return f"risk index for 20 countries (top: {top})"
 
 
+def run_site():
+    """Rebuild and publish the website bundle from what is in BigQuery now."""
+    global _models
+    import build_site_data as bs
+    try:
+        if _models is None:
+            _models = lp.load_models(lp.download_release(BUCKET, MODEL_DIR, MODEL_VERSION))
+        bundle = bs.build_bundle(bigquery.Client(project=PROJECT), _models)
+        url = bs.publish(bs.to_json(bundle), bundle["meta"]["as_of_week"])
+        msg = (f"OK: site bundle as of {bundle['meta']['as_of_week']} -> {url}; "
+               f"briefs: {bundle['summaries']['provenance'].get('source')}; "
+               f"ACLED: {'yes' if bundle['meta']['acled'] else 'no'}; lanes: {'yes' if bundle['lanes'] else 'no'}")
+        print(msg)
+        return msg, 200
+    except Exception:
+        print(traceback.format_exc())
+        return "SITE BUILD FAILED - see logs", 500
+
+
 @functions_framework.http
 def run_pipeline(request):
     global _models
+    if request.args.get("site") == "1":
+        return run_site()
     today = datetime.now(timezone.utc).date()
     if not is_run_week(today) and request.args.get("force") != "1":
         msg = f"SKIPPED: {today} is not in a run week (every 2nd week from {REFRESH_ANCHOR_MONDAY})"

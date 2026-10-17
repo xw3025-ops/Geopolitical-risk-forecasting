@@ -11,6 +11,8 @@
 #   3. deploy the Cloud Function (gen2, HTTP, private)
 #   4. create or update the Cloud Scheduler job (weekly trigger; the function
 #      itself only works every 2nd week)
+#   5. create or update the website job (weekly, ?site=1: rebuild + publish the
+#      site bundle to gs://$SITE_BUCKET; run cloud_function/setup_site.sh once first)
 #
 # Check REGION / FUNCTION / JOB match what is already deployed:
 #     gcloud functions list --project=$PROJECT
@@ -32,6 +34,9 @@ BUCKET=geopolitical-risk-forecasting-models
 VERSION=v2.2                 # release folder in GCS: goldstein v2.2 + conflict-surge v2.2
 GOLDSTEIN=v2.2
 SCHEDULE="0 6 * * 2"   # Tuesdays 06:00 UTC: >1 day after the as-of week ends, so GDELT has caught up
+SITE_JOB=weekly-site-refresh
+SITE_SCHEDULE="0 8 * * 2"   # Tuesdays 08:00 UTC: after the forecasts (06:00) and trade-refresh (07:00)
+SITE_BUCKET=geopolitical-risk-forecasting-site
 
 # ---- 0. the release must still reproduce its own test predictions
 PY=.venv/bin/python                                   # macOS / Linux venv
@@ -48,21 +53,33 @@ gcloud storage cp \
   artifacts/risk_v1_calibration.json \
   "gs://${BUCKET}/models/${VERSION}/" --project="$PROJECT"
 
-# ---- ACLED credentials for the risk index: attached only if they exist in Secret Manager
-# (without them the function still forecasts; its risk step reports "skipped").
-if gcloud secrets describe acled-email --project="$PROJECT" >/dev/null 2>&1 \
-   && gcloud secrets describe acled-password --project="$PROJECT" >/dev/null 2>&1; then
-  SECRETS_FLAG="--set-secrets=ACLED_EMAIL=acled-email:latest,ACLED_PASSWORD=acled-password:latest"
-  echo "ACLED secrets found - risk index enabled"
+# ---- secrets: each attached only if it exists in Secret Manager (cloud_function/set_secrets.sh)
+# Without ACLED the risk index is skipped and the site has no event overlay; without DeepSeek the
+# site briefs fall back to template text; Guardian / NYT add news to the China briefs.
+SECRETS=""
+for pair in ACLED_EMAIL=acled-email ACLED_PASSWORD=acled-password DEEPSEEK_API_KEY=deepseek-api-key \
+            GUARDIAN_API_KEY=guardian-api-key NYT_API_KEY=nyt-api-key; do
+  if gcloud secrets describe "${pair#*=}" --project="$PROJECT" >/dev/null 2>&1; then
+    SECRETS="${SECRETS:+$SECRETS,}${pair}:latest"
+  fi
+done
+if [ -n "$SECRETS" ]; then
+  SECRETS_FLAG="--set-secrets=$SECRETS"
+  echo "Secrets attached: $SECRETS"
 else
   SECRETS_FLAG="--clear-secrets"
-  echo "ACLED secrets not in Secret Manager - deploying without them (risk index will be skipped)"
+  echo "No secrets in Secret Manager - deploying without them (no ACLED, template briefs)"
 fi
 
 # ---- 2. function source
 BUILD=$(mktemp -d)
 cp cloud_function/main.py cloud_function/gdelt_refresh.py cloud_function/requirements.txt \
-   live_pipeline.py honest_common.py model_architectures.py risk_index.py target_variants.py "$BUILD/"
+   live_pipeline.py honest_common.py model_architectures.py risk_index.py target_variants.py \
+   build_site_data.py src/config.py src/trade_sources.py "$BUILD/"
+# files the site builder reads by relative path
+mkdir -p "$BUILD/data/hormuz" "$BUILD/paper"
+cp data/hormuz/hormuz_dependence.csv "$BUILD/data/hormuz/"
+cp paper/v22_stats.json paper/linear_baselines.json "$BUILD/paper/"
 echo "Function source: $(ls "$BUILD" | tr '\n' ' ')"
 
 # ---- 3. deploy
@@ -70,7 +87,7 @@ gcloud functions deploy "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGIO
   --runtime=python312 --source="$BUILD" --entry-point=run_pipeline \
   --trigger-http --no-allow-unauthenticated \
   --memory=4GiB --cpu=2 --timeout=3600s \
-  --set-env-vars=MODEL_VERSION="$VERSION" \
+  --set-env-vars=MODEL_VERSION="$VERSION",SITE_BUCKET="$SITE_BUCKET",NEWS_CACHE=/tmp/news_cache \
   $SECRETS_FLAG
 
 URL=$(gcloud functions describe "$FUNCTION" --gen2 --project="$PROJECT" --region="$REGION" \
@@ -89,6 +106,20 @@ gcloud scheduler jobs $ACTION http "$JOB" --project="$PROJECT" --location="$REGI
   --oidc-service-account-email="$SA" --oidc-token-audience="$URL" \
   --attempt-deadline=1800s --max-retry-attempts=0
 
+# ---- 5. website job (same function, ?site=1)
+if gcloud scheduler jobs describe "$SITE_JOB" --project="$PROJECT" --location="$REGION" >/dev/null 2>&1; then
+  ACTION=update
+else
+  ACTION=create
+fi
+gcloud scheduler jobs $ACTION http "$SITE_JOB" --project="$PROJECT" --location="$REGION" \
+  --schedule="$SITE_SCHEDULE" --time-zone=UTC --uri="$URL?site=1" --http-method=POST \
+  --oidc-service-account-email="$SA" --oidc-token-audience="$URL" \
+  --attempt-deadline=1800s --max-retry-attempts=1
+
+echo
+echo "Rebuild the website bundle now:"
+echo "  curl -X POST -d '' -H \"Authorization: bearer \$(gcloud auth print-identity-token)\" \"$URL?site=1\""
 echo
 echo "Deployed $FUNCTION ($VERSION). Trigger a run now (ignores the every-2-weeks rule):"
 echo "  curl -X POST -d '' -H \"Authorization: bearer \$(gcloud auth print-identity-token)\" \"$URL?force=1\""

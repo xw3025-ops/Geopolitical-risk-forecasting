@@ -737,10 +737,10 @@ para(
 doc.add_heading("5.4  A dynamic system", level=2)
 para(
     "The monitor is refreshed without manual intervention. Every second week a scheduled cloud job rebuilds the "
-    "weekly GDELT panel through the last complete week, runs the release models, writes the forecasts to "
-    "BigQuery and builds a single data bundle (scores, dyad forecasts, histories, recent ACLED events, shipping "
-    "lanes, briefs), which it publishes to cloud storage. A second weekly job refreshes the IMF trade and "
-    "PortWatch shipping series. The website is a static front end that reads the latest bundle on every visit, "
+    "weekly GDELT panel through the last complete week, runs the release models and writes the forecasts to "
+    "BigQuery. A second job refreshes the IMF trade and PortWatch shipping series every week. A third weekly job, "
+    "run after both, builds a single data bundle (scores, dyad forecasts, histories, recent ACLED events, shipping "
+    "lanes, briefs) and publishes it to cloud storage. The website is a static front end that reads the latest bundle on every visit, "
     "so a refresh reaches users without redeploying the site, and the date of the data is shown on every page. "
     "Table 7 lists every external source used by the models and the monitor.")
 table("External data used by the forecasting models and the risk monitor.",
