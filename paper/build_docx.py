@@ -190,7 +190,9 @@ para(
     "forecast of average relations. The contribution is methodological: a demonstration "
     "of how self-attention can bring the international system into dyad-level forecasts, a working prototype "
     "that re-forecasts the region every two weeks from live data, and evidence-based directions for scaling the "
-    "approach. Elsewhere in the paper the model supplies the likelihood component of a risk index for "
+    "approach. Section 5 shows how the forecasts drive a bilingual risk monitor for organisations with trade at "
+    "stake in the region, and lists every external data source it uses. Elsewhere in the paper the model also "
+    "supplies the likelihood component of a risk index for "
     "commercial users.")
 
 # ============================================================== 1
@@ -578,7 +580,7 @@ para(
     "13-week horizon, which leaves organisations a quarter to act, but forecasts the *worst month* of the coming "
     "quarter: the highest four-week mean of a dyad's weekly conflict intensity, the log of the summed Goldstein "
     "scores of its hostile events. Counting hostile events only, by volume, removes the dilution shown in "
-    "Figure 13, where humanitarian and diplomatic events raised the average score during a war. A **surge** is a "
+    "Figure 14, where humanitarian and diplomatic events raised the average score during a war. A **surge** is a "
     "quarter whose peak exceeds the dyad's typical quarterly peak by more than the worst tenth of historical "
     f"gaps ({V22S['surge_rate']:.0%} of test dyad-weeks). The model adds conflict intensity and summed Goldstein to "
     "its inputs and weights each dyad's error by its historical volatility, so that the many stable "
@@ -629,10 +631,11 @@ figure("fig14_surge_isr", "Israel → Palestine on the test weeks. (a) The v2.1 
 
 doc.add_heading("4.8  From forecast to risk product", level=2)
 para(
-    "Elsewhere in this paper the forecasts feed a country-level risk index for commercial users, in which risk "
-    "is the product of likelihood and impact. The transformer supplies the likelihood component: a calibrated "
-    "probability that a country's relations deteriorate materially below their own 52-week normal over the "
-    "next quarter, which ranks countries with ROC-AUC 0.70 on held-out data with the v2.2 forecasts. One "
+    "Section 5 describes how the forecasts become a country risk score and a live risk monitor. Elsewhere in "
+    "this paper they also feed a country-level risk index in which risk is the product of likelihood and impact; "
+    "there the transformer supplies the likelihood component, a calibrated probability that a country's "
+    "relations deteriorate materially below their own 52-week normal over the next quarter, which ranks "
+    "countries with ROC-AUC 0.70 on held-out data with the v2.2 forecasts. One "
     "finding from that work belongs here because it concerns model outputs: the direction model's escalation "
     "probability, used naively as a likelihood, ranks countries *worse* than random (AUC 0.37), because a high "
     "value mostly flags a country that has just had an unusually good week. Outputs must be validated against "
@@ -640,9 +643,132 @@ para(
     "the Goldstein forecast with the conflict-surge flag of Section 4.7 instead of the direction model.")
 
 # ============================================================== 5
-doc.add_heading("5  Limitations", level=1)
+doc.add_heading("5  From forecasts to a risk monitor", level=1)
+para(
+    "The forecasts are published through a bilingual (English and Chinese) web-based risk monitor for "
+    "organisations with trade at stake in the region, in particular Chinese exporters, energy buyers, "
+    "contractors and shippers. Its design follows four principles. **Forecast and observation are kept apart:** "
+    "everything produced by, or built on, the transformer carries one consistent visual marker, and observed "
+    "data (recent violence, trade, shipping) are shown plainly, so users can tell the model's view of the next "
+    "quarter from what has already happened. **The system view is kept:** a country's relationships are drawn "
+    "on the map, so a user sees where pressure comes from, not only how much. **Decisions, not data:** every "
+    "figure is accompanied by a plain statement of what it means for an organisation with interests in the "
+    "country. **Calm by default:** the map shows only relationships forecast to turn hostile and those with a "
+    "conflict-surge alert, so attention goes where it is needed (Figure 13).")
+figure("fig15_website", "The risk monitor. (a) Regional overview: countries coloured by risk; the hovered country "
+       "(Saudi Arabia) is lifted and its troubled relationships are drawn - orange for those forecast to turn "
+       "hostile, glowing with a travelling ball where a conflict surge is flagged; rings mark the Strait of Hormuz, "
+       "Bab el-Mandeb and the Suez Canal, coloured by shipping disruption. (b) Country page (Yemen): the risk score "
+       "and its parts, the 13-week outlook against the past year, the relationships most at risk, the China "
+       "exposure brief, and ACLED events of the last 28 days as pillars on the map.", 16)
+
+doc.add_heading("5.1  How risk is defined", level=2)
+para(
+    "Risk is defined for an organisation with trade at stake in a country: it is high only when the conflict "
+    "environment is expected to be serious **and** much trade is exposed to it. Each country receives three "
+    "scores on a 0–100 scale, recomputed at every refresh (Table 6).")
+bullet("**Conflict severity** combines the two transformer forecasts with one observed signal. *Forecast "
+       "hostility* is the activity-weighted mean of the Goldstein forecasts of all the country's dyads, including "
+       "its domestic dyad, mapped linearly so that +1.5 or above scores 0 and −4.0 or below scores 1. *Forecast "
+       "surge risk* is the activity-weighted mean conflict-surge probability of those dyads, with 0.6 or above "
+       "scoring 1. *Recent violence* is the number of deaths recorded by ACLED in the last four weeks on a log "
+       "scale, with 2,000 or more scoring 1. Severity = 100 × (0.40 × hostility + 0.30 × surge risk + 0.30 × "
+       "violence). Activity weights are each dyad's average weekly event count over the past year, so a country's "
+       "busiest relationships count most.")
+bullet("**Trade at stake** (exposure) is China's goods trade with the country, exports plus imports, over the latest "
+       "12 months published by the IMF, on a log scale relative to the largest partner in the region: "
+       "100 × log(1 + trade) / log(1 + largest trade). The log scale keeps a mid-sized partner from being "
+       "dwarfed by Saudi Arabia or the United Arab Emirates.")
+bullet("**Risk** = √(severity × trade at stake), the geometric mean of the two. Unlike a product it stays on the "
+       "0–100 scale, and unlike an average it rewards neither alone: a country at war with almost no trade at "
+       "stake, or a large partner in calm conditions, scores moderately. Bands are severe (≥ 55), high (≥ 45), "
+       "elevated (≥ 32) and low. **Regional risk** is the average of the 20 country scores, and every score is "
+       "also reported as its change since the previous refresh.")
+para(
+    "The weights and scaling points are design choices, set so that each component spans its full range across "
+    "the region and fixed in advance rather than fitted, so that scores remain comparable across refreshes. They "
+    "are published with the scores and can be changed in one place. The score orders countries by business "
+    "risk; it is not a probability.")
+table("Components of the country risk score.",
+      ["Component", "Source", "Kind", "Scaling to 0–1"],
+      [["Forecast hostility", "Transformer v2.2, 13-week Goldstein forecast", "Forecast", "+1.5 → 0, −4.0 → 1"],
+       ["Forecast surge risk", "Transformer v2.2, conflict-surge probability", "Forecast", "0 → 0, 0.6 → 1"],
+       ["Recent violence", "ACLED deaths, last 4 weeks", "Observed", "log, 2,000 deaths → 1"],
+       ["Trade at stake", "IMF IMTS, China trade, last 12 months", "Observed", "log, relative to largest partner"],
+       ["Severity", "0.40 / 0.30 / 0.30 of the first three", "Forecast-based", "× 100"],
+       ["Risk", "√(severity × trade at stake)", "Forecast-based", "0–100"]],
+      [3.4, 6.2, 2.4, 4.0])
+
+doc.add_heading("5.2  What the monitor shows", level=2)
+bullet("**Regional overview.** A three-dimensional map, coloured on a single red scale by risk or severity, is the "
+       "background of the page. Hovering a country lifts it and draws its relationships: orange arcs for dyads "
+       "whose forecast tone is hostile (below −0.25), deeper orange for more hostile, and, for any dyad with a "
+       "conflict-surge alert, a glowing arc with a travelling ball whose colour shows the surge probability "
+       "(yellow near 50%, orange near 60%, red at 75% or more). Calm, cooperative relationships are not drawn. "
+       "A watchlist ranks the highest-risk countries, those forecast to deteriorate most against their own "
+       "normal, and the disrupted shipping lanes.")
+bullet("**Country page.** The risk score and its components, a one-year history of the country's relations with "
+       "the 13-week forecast added, its most active relationships with their forecast tone, the trade at stake, "
+       "recent violence (ACLED events of the last 28 days drawn as pillars on the map, height proportional to "
+       "deaths) and a China exposure brief (Section 5.3).")
+bullet("**Shipping lanes.** Weekly vessel transits through the Strait of Hormuz, Bab el-Mandeb and the Suez Canal "
+       "over the last four weeks are compared with their 2019 – September 2023 average, before the Red Sea "
+       "attacks; a lane is *disrupted* at −50% or worse and *reduced* at −20% or worse. For Hormuz the monitor "
+       "also reports China's trade with partners whose oil exports depend on the strait, weighted by the share "
+       "of each partner's crude exports that cannot bypass it (high case).")
+bullet("**Data & model page and export.** A plain-language account of the data, the model and its limits, with "
+       "the test results of Section 4; all outputs (country scores, the 400 dyad forecasts, shipping lanes, the "
+       "ACLED events shown and the full data bundle) can be downloaded.")
+
+doc.add_heading("5.3  Written briefs", level=2)
+para(
+    "Each refresh produces a regional brief and, for each country, an outlook, a summary of its trade relationship "
+    "with China and two to four points on what could be at risk for Chinese entities, each naming who (exporters, "
+    "crude buyers, contractors, shipping lines, staff on the ground) and how. They are written in English and "
+    "Chinese by a large language model (DeepSeek, deepseek-chat) from a fixed set of inputs: the dashboard figures, "
+    "the IMF trade series, the country's Hormuz dependence, the shipping lanes it borders, and recent articles "
+    "mentioning both China and the country, retrieved from the Guardian and New York Times APIs over the previous "
+    "90 days. The instructions require every figure to come from those inputs, named projects, companies or "
+    "events to come from a cited article, and no causal claims the inputs do not state; without a relevant "
+    "article the brief stays at the level of sectors. Sources are listed under each brief, briefs are labelled "
+    "as machine-written, and if the model is unavailable the page falls back to a fixed template built from the "
+    "same figures.")
+
+doc.add_heading("5.4  A dynamic system", level=2)
+para(
+    "The monitor is refreshed without manual intervention. Every second week a scheduled cloud job rebuilds the "
+    "weekly GDELT panel through the last complete week, runs the release models, writes the forecasts to "
+    "BigQuery and builds a single data bundle (scores, dyad forecasts, histories, recent ACLED events, shipping "
+    "lanes, briefs), which it publishes to cloud storage. A second weekly job refreshes the IMF trade and "
+    "PortWatch shipping series. The website is a static front end that reads the latest bundle on every visit, "
+    "so a refresh reaches users without redeploying the site, and the date of the data is shown on every page. "
+    "Table 7 lists every external source used by the models and the monitor.")
+table("External data used by the forecasting models and the risk monitor.",
+      ["Source", "Provider and access", "Used for", "Refresh"],
+      [["GDELT 2.0 event data", "GDELT Project; public BigQuery dataset gdelt-bq.gdeltv2.events",
+        "All model inputs and targets: weekly dyad panel (400 MENA dyads, 1,559 MENA–world links, 5,122 world dyads for training)", "Every 2 weeks"],
+       ["ACLED", "Armed Conflict Location & Event Data; API (registered account)",
+        "Recent violence in severity; event map; context in briefs", "Every 2 weeks"],
+       ["IMF International Trade in Goods (IMTS)", "IMF; SDMX 3.0 API",
+        "China's trade with each country: trade at stake, trade briefs", "Weekly (published with a 3–4 month lag)"],
+       ["IMF PortWatch", "IMF and University of Oxford; public ArcGIS API",
+        "Daily vessel transits through Hormuz, Bab el-Mandeb, Suez, Cape of Good Hope, Malacca", "Weekly"],
+       ["Strait of Hormuz dependence", "Compiled from IEA and EIA route data (data/hormuz)",
+        "Share of each Gulf exporter's crude that cannot bypass Hormuz", "When sources change"],
+       ["The Guardian Open Platform; New York Times Article Search", "Guardian Media Group; The New York Times; APIs",
+        "Recent coverage of each country and China for the briefs", "Every 2 weeks"],
+       ["DeepSeek API (deepseek-chat)", "DeepSeek; API",
+        "Writing the bilingual briefs from the inputs above", "Every 2 weeks"],
+       ["World Bank WDI", "World Bank; API", "Trade exposure in the earlier risk-index module", "Every 2 weeks"],
+       ["Natural Earth via world-atlas", "Natural Earth (public domain)", "Country boundaries for the maps", "Static"]],
+      [4.0, 4.4, 5.6, 2.4],
+      note="UN Comtrade (HS 2709/2711, 2024) is used only for the optional Hormuz energy detail of the trade module. "
+           "News articles are used as cited context only; they are not model inputs.")
+
+# ============================================================== 6
+doc.add_heading("6  Limitations", level=1)
 para("As a prototype, the model has limitations that define its current scope and point to the next steps in "
-     "Section 6.")
+     "Section 7.")
 para("**Data volume.** The model is trained on 391 weeks of the regional system, and Section 4.3 showed it is "
      "limited by the number of training examples rather than by input richness. Seeds vary "
      f"({min(R['v21_seed_r2']):.3f}–{max(R['v21_seed_r2']):.3f} test R² for v2.1), which is why the release "
@@ -651,7 +777,7 @@ para("**Regime shifts.** System-level patterns learned from 2015–2022 transfer
      "2024–2026 configuration of direct Israel–Iran exchanges and a wider Red Sea conflict. A model can only "
      "attend to relationships whose dynamics it has seen.")
 para("**One input, with known biases.** GDELT counts track media attention as much as events, coding errors and "
-     "duplicates are common, and the Goldstein average mixes very different events. Figure 13 shows a direct "
+     "duplicates are common, and the Goldstein average mixes very different events. Figure 14 shows a direct "
      "consequence: after 7 October 2023 the Israel → Palestine mean Goldstein score *rose*, because the war "
      "generated many statements, appeals and humanitarian events with positive scores, so averaged event scores "
      "can understate a crisis precisely when it is most severe.")
@@ -669,7 +795,7 @@ para("**Interpretability.** Attention patterns (Section 4.5) indicate where info
      "establish what drives a given forecast.")
 
 # ============================================================== 6
-doc.add_heading("6  Scaling up", level=1)
+doc.add_heading("7  Scaling up", level=1)
 para("The experiments point to where scale is most likely to pay off.")
 para("**More of the same instrument.** The learning curve shows the attention model still improving at full "
      "data, and same-instrument examples (MENA–world dyads) helped where different instruments (GDELT 1.0) did "
@@ -684,7 +810,7 @@ para("**From coded events to text, at the right scale.** A pretrained sentence m
      "headlines added no signal here; the coverage was too sparse (8% of dyad-weeks) and too generic. The "
      "promising route is dyad-specific representations learned from large multi-source news corpora, with "
      "encoders fine-tuned to extract actors, event types, intensity and certainty. That also fixes the dilution "
-     "problem in Figure 13 at its source, and requires GPU infrastructure beyond a single laptop.")
+     "problem in Figure 14 at its source, and requires GPU infrastructure beyond a single laptop.")
 para("**A longer record through in-house coding.** The largest gain is likely to come from an event-coding "
      "pipeline of our own, applied uniformly to a news archive reaching back several decades. One instrument "
      "across that span would turn eleven years of training data into thirty or more, with many more crises, "
@@ -700,7 +826,7 @@ para("**From point forecasts to calibrated risk.** Operational use needs uncerta
      "existing production loop.")
 
 # ============================================================== 7
-doc.add_heading("7  Conclusion", level=1)
+doc.add_heading("8  Conclusion", level=1)
 para(
     "This section has demonstrated a new way of applying deep learning to forecasting international relations: "
     "each directed country pair becomes a token, a temporal transformer models each relationship's history, and "
@@ -711,8 +837,8 @@ para(
     "on hand-engineered features without needing that engineering; trained on more dyads from the same "
     "instrument, it moves ahead of it. A second model with the same architecture forecasts the worst month of "
     "conflict in the coming quarter and flags conflict surges far better than forecasts of average relations. "
-    "Both run live every two weeks, and the Goldstein forecast supplies the likelihood component of the risk "
-    "index developed elsewhere in this paper. The experiment programme shows "
+    "Both run live every two weeks and feed a bilingual risk monitor that combines them with observed violence, "
+    "trade and shipping data into a transparent country risk score for organisations with trade at stake. The experiment programme shows "
     "when the systemic view pays off: with enough data and when crises propagate across the system, with an "
     "advantage that grows as data grow. The model is data-limited rather than feature-limited, which makes a "
     "global, same-instrument system, and a longer record coded by an in-house pipeline, the natural next steps; "
@@ -726,6 +852,8 @@ for ref in [
     "Annual Meeting of the International Studies Association, New Orleans.",
     "Goldstein, J. S. (1992). A conflict-cooperation scale for WEIS events data. *Journal of Conflict Resolution*, "
     "36(2), 369–385.",
+    "International Monetary Fund and University of Oxford. *IMF PortWatch: monitoring trade disruptions from "
+    "space*. https://portwatch.imf.org (chokepoint transit data, accessed October 2026).",
     "Hegre, H., Allansson, M., Basedau, M., Colaresi, M., Croicu, M., Fjelde, H., et al. (2019). ViEWS: A political "
     "violence early-warning system. *Journal of Peace Research*, 56(2), 155–174.",
     "Hegre, H., Bell, C., Colaresi, M., Croicu, M., Hoyles, F., Jansen, R., et al. (2021). ViEWS2020: Revising and "

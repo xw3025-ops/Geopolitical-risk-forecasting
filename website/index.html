@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MENA Risk Monitor</title>
+  <meta name="description" content="Country risk scores for 20 MENA states from a transformer forecast of GDELT relations, ACLED events and China trade exposure.">
+  <meta name="theme-color" content="#ecedeb">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Michroma&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script src="config.js"></script>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <div class="app">
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="mark"><span></span></div>
+        <div>
+          <h1 id="brand-title">MENA Risk Monitor</h1>
+          <div class="sub" id="sub">Loading…</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <span id="fclegend"></span>
+      <span class="pill" id="status"><span class="lamp off"></span>Connecting</span>
+      <a class="pill" id="nav-about" href="#/about">Data &amp; model</a>
+      <div class="menu" id="export"><button class="pill" id="export-btn" type="button">Export</button><div class="drop glass" id="export-drop"></div></div>
+      <span class="pill lang" id="lang"><button data-l="en" type="button">EN</button><button data-l="zh" type="button">中文</button></span>
+    </header>
+    <main id="view"><div class="loading">Loading the latest forecasts…</div></main>
+  </div>
+  <div class="footer" id="footer"></div>
+  <div class="tooltip" id="tip"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
