@@ -8,7 +8,7 @@ goldstein   v2.1 and v2.2 on the release test weeks (forecast_metrics), and
             their validation MSE (selection).
 flag        on the test weeks shared by every model (direction v2.0 starts
             later): AUC and weekly top-10 hit rate for conflict surges and
-            Goldstein crises, for the v2.0 direction model, v2.1, the surge
+            Goldstein crises, for the v2.0 direction model, v2.2 Goldstein, the surge
             model, a naive "last quarter's peak" forecast and a linear
             regression on the hand-built features.
 """
@@ -55,7 +55,7 @@ def main():
 
     # ---- conflict-surge flag vs the alternatives
     d = np.load("artifacts/direction_v2.0_test_predictions.npz", allow_pickle=True)
-    g = np.load("artifacts/goldstein_v2.1_test_predictions.npz", allow_pickle=True)
+    g = np.load("artifacts/goldstein_v2.2_test_predictions.npz", allow_pickle=True)
     s = np.load("artifacts/surge_v2.2_test_predictions.npz", allow_pickle=True)
     W = np.array(sorted(set(ctx.te) & set(d["week_idx"])))
     pick = lambda z, a: z[a][[list(z["week_idx"]).index(w) for w in W]]
@@ -68,7 +68,7 @@ def main():
     lin = LinearRegression().fit(rows(Fc, ctx.tr)[ok], rows(pc["y"], ctx.tr)[ok])
     scores = {
         "v2.0 direction model (4-week escalation probability)": pick(d, "prob"),
-        "v2.1 Goldstein forecast (fall below normal)": mg["normal"][:, W].T - pick(g, "pred"),
+        "v2.2 Goldstein forecast (fall below normal)": mg["normal"][:, W].T - pick(g, "pred"),
         "Naive: last quarter's peak conflict": tv.peak_past(c, False)[:, W].T - normal,
         "Linear regression, hand-built features*": lin.predict(rows(Fc, W)).reshape(len(W), -1) - normal,
         "v2.2 conflict-surge model": pick(s, "pred") - normal,
@@ -95,7 +95,7 @@ def main():
     stats["surge_rate_test_all"] = float(ctx.labels["conflict-surge"][:, s["week_idx"]].mean())
     stats["direction_own_auc"] =float(roc_auc_score(pick(d, "y_true").ravel(), pick(d, "prob").ravel()))
 
-    # Israel-Palestine: tracking of the conflict peak vs v2.1's mean-goldstein forecast
+    # Israel-Palestine: tracking of the conflict peak vs v2.2's mean-goldstein forecast
     isr = {}
     for a, b in (("ISR", "PSE"), ("PSE", "ISR")):
         j = int(np.where((p["a1"] == a) & (p["a2"] == b))[0][0])
@@ -108,7 +108,7 @@ def main():
     stats["isr_pse"] = isr
     json.dump(stats, open(OUT, "w"), indent=1)
 
-    # figure: Israel -> Palestine, v2.1 (mean goldstein) vs the surge model (peak conflict)
+    # figure: Israel -> Palestine, v2.2 (mean goldstein) vs the surge model (peak conflict)
     BLUE, INK, MUTED, GRID = "#2a78d6", "#0b0b0b", "#9a9893", "#e6e5e1"
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 9, "axes.spines.top": False,
                          "axes.spines.right": False, "axes.edgecolor": MUTED, "savefig.dpi": 220,
@@ -116,7 +116,7 @@ def main():
     j = int(np.where((p["a1"] == "ISR") & (p["a2"] == "PSE"))[0][0])
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.7), sharex=True)
     for ax, z, t, title, ylab in [
-            (axes[0], g, mg, "(a) v2.1: mean Goldstein, next 13 weeks", "Goldstein"),
+            (axes[0], g, mg, "(a) v2.2: mean Goldstein, next 13 weeks", "Goldstein"),
             (axes[1], s, pc, "(b) v2.2 surge model: peak conflict, next 13 weeks", "log conflict intensity")]:
         wk = p["weeks"][z["week_idx"]]
         ax.plot(wk, z["y_true"][:, j], color=INK, lw=1.8, label="Actual")

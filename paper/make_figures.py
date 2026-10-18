@@ -43,6 +43,7 @@ S = json.load(open(f"{OUT}/stats.json"))
 V = json.load(open(f"{OUT}/variance_stats.json"))
 R21 = json.load(open(f"{OUT}/v21_stats.json"))  # release v2.1 (cross-system attention)
 R22 = json.load(open(f"{OUT}/v22_stats.json"))  # release v2.2 (+ world training data; surge flag)
+A22 = json.load(open(f"{OUT}/v22_analysis.json"))  # v2.2 examples, variance, attention (compute_v22_analysis.py)
 EXP = [json.loads(line) for line in open("logs/goldstein_experiments.jsonl")]
 
 
@@ -117,7 +118,8 @@ def fig_architecture():
     X, W = 0.02, 0.96
     steps = [
         ("GDELT 2.0 event records (BigQuery)  →  weekly directed-dyad panel:  400 MENA dyads (incl. domestic)\n"
-         "+ 1,559 dyads linking MENA states to the rest of the world  =  1,959 dyad tokens per week", "#f4f3f0", MUTED),
+         "+ 1,559 dyads linking MENA states to the rest of the world  =  1,959 dyad tokens per week\n"
+         "(training only: + 5,122 dyads between countries outside the region, in three extra sequences)", "#f4f3f0", MUTED),
         ("Input per forecast week: 1,959 dyads × 13 weeks × 24 features\n"
          "log CAMEO root-code counts (20), mean Goldstein, trailing 26/52-week Goldstein means, 52-week activity",
          "white", MUTED),
@@ -133,7 +135,7 @@ def fig_architecture():
         ("Dense(1): correction per dyad   +   trailing 52-week mean Goldstein (residual baseline, from input)",
          "white", MUTED),
         ("Output: mean Goldstein over the next 13 weeks, read off the 400 MENA tokens\n"
-         "release v2.1 = average of 5 independently trained seeds", "#f4f3f0", MUTED),
+         "release v2.2 = average of 5 independently trained seeds", "#f4f3f0", MUTED),
     ]
     h = 0.088
     gap = (0.93 - len(steps) * h) / (len(steps) - 1)
@@ -142,7 +144,7 @@ def fig_architecture():
         box(ax, X, y, W, h, text, fc=fc, ec=ec, fs=7)
     for y0, y1 in zip(ys[:-1], ys[1:]):
         arrow(ax, X + W / 2, y0, X + W / 2, y1 + h)
-    ax.text(0.5, -0.02, f"{R21['params']:,} trainable parameters per seed model", ha="center",
+    ax.text(0.5, -0.02, f"{A22['params']:,} trainable parameters per seed model", ha="center",
             fontsize=7.5, color=INK2)
     save(fig, "fig2_architecture")
 
@@ -289,14 +291,14 @@ def fig_ablation():
 
 # ---------------------------------------------------------------- 7. examples
 def fig_examples():
-    ex = R21["examples"]
+    ex = A22["examples"]
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 4.6), sharex=True)
     for ax, (name, e) in zip(axes.ravel(), ex.items()):
         w = [dt.date.fromisoformat(s) for s in e["weeks"]]
         ax.plot(w, e["trailing52"], color=MUTED, lw=1.2, ls="--", label="trailing 52-week mean")
         ax.plot(w, e["actual"], color=INK, lw=1.5, label="actual")
-        ax.plot(w, e["forecast"], color=BLUE, lw=2, label="transformer v2.1")
-        red = R21["variance"]["example_reduction"][name]
+        ax.plot(w, e["forecast"], color=BLUE, lw=2, label="transformer v2.2")
+        red = A22["variance"]["example_reduction"][name]
         ax.set_title(f"{name.replace('-', ' → ')}   (squared error vs 52-week mean: {-red:+.0%})",
                      loc="left", fontsize=8.5)
         ax.yaxis.grid(True, color=GRID, lw=0.6)
@@ -314,10 +316,11 @@ def fig_examples():
 # ---------------------------------------------------------------- 8. attention hubs
 def fig_attention():
     from matplotlib.patches import Patch
-    rec = R21["attention"]["received"]
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.2), sharex=True)
-    for ax, (key, title) in zip(axes, [("crossdyad_block0_h3", "Cross-system block 1, head 4"),
-                                       ("crossdyad_block0_h0", "Cross-system block 1, head 1")]):
+    rec = A22["attention"]["received"]
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.2))  # own scales: one head is far more selective
+    heads = [(k, f"Cross-system block {int(k[15]) + 1}, head {int(k[-1]) + 1}")
+             for k in A22["attention"]["selective_heads"]]
+    for ax, (key, title) in zip(axes, heads):
         top = rec[key][:10][::-1]
         ax.barh(range(10), [t["lift"] for t in top], height=0.62,
                 color=[BLUE if t["external"] else AQUA for t in top])

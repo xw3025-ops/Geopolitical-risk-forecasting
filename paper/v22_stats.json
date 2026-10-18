@@ -45,14 +45,14 @@
     "top10": 0.1657142857142857
    }
   },
-  "v2.1 Goldstein forecast (fall below normal)": {
+  "v2.2 Goldstein forecast (fall below normal)": {
    "conflict_surge": {
-    "auc": 0.5875682660786191,
-    "top10": 0.23047619047619047
+    "auc": 0.5945781464566827,
+    "top10": 0.24
    },
    "gold_crisis": {
-    "auc": 0.6184813847437001,
-    "top10": 0.3047619047619048
+    "auc": 0.6248068677810056,
+    "top10": 0.31047619047619046
    }
   },
   "Naive: last quarter's peak conflict": {
@@ -98,14 +98,14 @@
   "ISR-PSE": {
    "surge_corr": 0.46033207060307474,
    "surge_amp": 0.45365217328071594,
-   "gold_corr": 0.37859781394176045,
-   "gold_amp": 0.24525997042655945
+   "gold_corr": 0.3393245856577231,
+   "gold_amp": 0.5545966029167175
   },
   "PSE-ISR": {
    "surge_corr": 0.49317015365761246,
    "surge_amp": 0.4474072754383087,
-   "gold_corr": 0.5541640790308606,
-   "gold_amp": 0.21604831516742706
+   "gold_corr": 0.3380977034973324,
+   "gold_amp": 0.568766176700592
   }
  }
 }

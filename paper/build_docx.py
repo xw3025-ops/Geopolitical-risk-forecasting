@@ -1,7 +1,9 @@
 """
-Build the paper section (release v2.1) as a Word document from saved results.
+Build the paper section (release v2.2) as a Word document from saved results.
 
-    KERAS_BACKEND=torch python paper/compute_v21_stats.py    # v2.1 numbers + attention analysis
+    KERAS_BACKEND=torch python paper/compute_v21_stats.py    # v2.1 numbers, experiments
+    python paper/compute_v22_stats.py                         # v2.2 numbers, surge flag
+    KERAS_BACKEND=torch python paper/compute_v22_analysis.py  # v2.2 variance, examples, attention
     python paper/make_figures.py paper/make_learning_curve.py paper/make_backtest_figure.py paper/make_scaling_figure.py
     python paper/build_docx.py                               # -> paper/transformer_section.docx
 """
@@ -29,6 +31,7 @@ V21, V20, GBM = R["benchmark"]["v2.1"], R["benchmark"]["v2.0"], R["gbm"]
 LIN = json.load(open(f"{P}/linear_baselines.json"))      # OLS, fit on training weeks only
 V22S = json.load(open(f"{P}/v22_stats.json"))            # release v2.2: world training data, surge flag
 V22, FL = V22S["v2.2"], V22S["flag"]
+A22 = json.load(open(f"{P}/v22_analysis.json"))          # v2.2 variance, examples, attention (compute_v22_analysis.py)
 RISK = json.load(open("artifacts/risk_v1_calibration.json"))
 OLS1, OLS44 = LIN["OLS current week"], LIN["OLS 44 history features"]
 AB, PATH, DIR = F["ablation"], F["path"], F["direction"]
@@ -170,16 +173,15 @@ para(
     "dyad attend to every other. The model forecasts the 400 dyads among 20 Middle East and North Africa (MENA) "
     "states while attending to a wider system of 1,959 dyads that also includes the region's relations with the "
     "rest of the world. Using GDELT event data aggregated by week, it forecasts each dyad's mean Goldstein "
-    "cooperation–conflict score over the next 13 weeks. Under a strict out-of-sample protocol the cross-system "
-    f"model (v2.1) reaches a test R² of {f3(V21['r2'])}, well ahead of a linear regression on the same raw weekly "
-    f"inputs ({f3(OLS1['r2'])}) and of the strongest naive forecast (a trailing 52-week mean, "
-    f"{f3(B['trailing 52-week mean']['r2'])}), and ahead of gradient boosting ({f3(GBM['r2'])}). It does so "
-    "from raw weekly inputs: the classical models reach comparable accuracy only when given 44 history features "
-    "that an analyst designed by hand, with hindsight about what predicts well. The transformer learns those "
-    "summaries itself, which is what lets the approach extend to new regions and data sources. Training the "
-    f"same model on {V22S['world_dyads']:,} additional dyads from outside the region (release v2.2) raises test "
-    f"R² to {f3(V22['r2'])}, ahead of every benchmark, including the hand-engineered linear model "
-    f"({f3(OLS44['r2'])}).")
+    "cooperation–conflict score over the next 13 weeks. Under a strict out-of-sample protocol the release model "
+    f"(v2.2) reaches a test R² of {f3(V22['r2'])}, about twice that of a linear regression on the same raw weekly "
+    f"inputs ({f3(OLS1['r2'])}), and ahead of the strongest naive forecast (a trailing 52-week mean, "
+    f"{f3(B['trailing 52-week mean']['r2'])}), gradient boosting ({f3(GBM['r2'])}) and a linear regression on 44 "
+    f"history features that an analyst designed by hand, with hindsight about what predicts well "
+    f"({f3(OLS44['r2'])}). The transformer learns those summaries itself, which is what lets the approach extend "
+    f"to new regions and data sources: trained on the region alone (v2.1) it already matches the hand-engineered "
+    f"model ({f3(V21['r2'])}), and training it on {V22S['world_dyads']:,} additional dyads from outside the region "
+    "moves it ahead.")
 para(
     "A systematic programme of experiments clarifies what drives these gains and what limits them. Attention "
     "across the system helps when there is enough training data and when crises propagate across the region, "
@@ -290,7 +292,7 @@ table("Data and model specification (release v2.2).", ["Item", "Specification"],
        ["Inputs per week", "log CAMEO root counts (20), mean Goldstein, trailing 26/52-week mean Goldstein, "
                            "52-week activity (24 features)"],
        ["Look-back", "13 weeks directly; up to 64 weeks through long-memory features"],
-       ["Model size", f"{R['params']:,} parameters per model; 5-model seed ensemble"]], [4.0, 12.0])
+       ["Model size", f"{A22['params']:,} parameters per model; 5-model seed ensemble"]], [4.0, 12.0])
 
 doc.add_heading("3.2  Architecture", level=2)
 para(
@@ -299,7 +301,7 @@ para(
     "the dyad attends only over its own weeks. The representation of the latest week is concatenated with two "
     "**country embeddings**, learned 8-dimensional vectors for the source and target state from one shared "
     "table, so that 'Iran' means the same on either side of a dyad while direction is preserved by position. "
-    "The resulting dyad tokens, 1,959 per week in v2.1, then pass through two **cross-system transformer** "
+    "The resulting dyad tokens, 1,959 per week, then pass through two **cross-system transformer** "
     "blocks in which every dyad attends to every other. All blocks use four-head attention, SwiGLU feed-forward "
     "layers (Shazeer 2020), residual connections and layer normalisation.")
 para(
@@ -307,9 +309,10 @@ para(
     "mean, so the model starts from the strongest naive forecast and learns when and how far the coming quarter "
     "will depart from a relationship's normal. Forecasts are read off the 400 MENA tokens. The release averages "
     "five identically configured models trained from different random seeds.")
-figure("fig2_architecture", "Architecture of release v2.1. Shaded blocks are the two attention stages: temporal "
+figure("fig2_architecture", "Architecture of release v2.2. Shaded blocks are the two attention stages: temporal "
        "attention within each dyad's own history, then cross-system attention across all 1,959 dyads of the "
-       "week. Tensor shapes in brackets.", 16)
+       "week. During training, three further sequences of dyads from outside the region pass through the same "
+       "blocks. Tensor shapes in brackets.", 16)
 
 doc.add_heading("3.3  Evaluation protocol", level=2)
 para(
@@ -346,35 +349,32 @@ para(
 doc.add_heading("4  Results", level=1)
 doc.add_heading("4.1  Benchmark performance", level=2)
 para(
-    f"Table 2 and Figure 4 report test performance. Release v2.1 reaches R² = {f3(V21['r2'])} and MAE = "
-    f"{f3(V21['mae'])} Goldstein points. Given the same raw weekly inputs, a linear regression reaches only "
+    f"Table 2 and Figure 4 report test performance. Release v2.2 reaches R² = {f3(V22['r2'])} and MAE = "
+    f"{f3(V22['mae'])} Goldstein points. Given the same raw weekly inputs, a linear regression reaches only "
     f"{f3(OLS1['r2'])}: the transformer's ability to learn from raw history roughly doubles the explained "
     f"variance. It is also ahead of every naive forecast, of the regional-attention v2.0 ({f3(V20['r2'])}) and of "
     f"gradient boosting on hand-built features ({f3(GBM['r2'])}), including on all three change measures "
-    f"(direction {pct(V21['dir_acc'])} vs {pct(GBM['dir_acc'])}, change correlation {V21['change_corr']:.3f} vs "
-    f"{GBM['change_corr']:.3f}, escalation AUC {V21['esc_auc']:.3f} vs {GBM['esc_auc']:.3f}). Release v2.2, "
-    f"the same model trained on additional dyads from outside the region (Section 4.3), improves every measure: "
-    f"R² {f3(V22['r2'])}, direction {pct(V22['dir_acc'])}, change correlation {V22['change_corr']:.3f} and "
-    f"escalation AUC {V22['esc_auc']:.3f}.")
+    f"(direction {pct(V22['dir_acc'])} vs {pct(GBM['dir_acc'])}, change correlation {V22['change_corr']:.3f} vs "
+    f"{GBM['change_corr']:.3f}, escalation AUC {V22['esc_auc']:.3f} vs {GBM['esc_auc']:.3f}).")
 para(
     f"The comparison with the raw-input regression is the central one. Given the 44 hand-built features, the "
-    f"same linear regression rises from {f3(OLS1['r2'])} to {f3(OLS44['r2'])}, level with the transformer "
-    f"(change correlation {OLS44['change_corr']:.3f} against {V21['change_corr']:.3f}, escalation AUC "
-    f"{OLS44['esc_auc']:.3f} against {V21['esc_auc']:.3f}, direction {pct(OLS44['dir_acc'])} against "
-    f"{pct(V21['dir_acc'])}). The whole of that gain comes from feature engineering done with hindsight "
-    "(Section 3.3). The transformer achieves it by learning from the raw series which summaries of the past "
-    "matter, so a well-engineered classical model is matched without anyone having to engineer it. That "
-    "property is what allows the approach to carry over to new regions, actors or data sources, where no "
-    "tested feature set exists. With more training data the transformer moves ahead of the engineered model "
-    f"(v2.2: R² {f3(V22['r2'])}, change correlation {V22['change_corr']:.3f}, escalation AUC "
-    f"{V22['esc_auc']:.3f}), whereas the engineered features would have to be redesigned to gain from it. "
-    "Beyond this, the transformer's specific advantages appear where Section 4.4 "
+    f"same linear regression rises from {f3(OLS1['r2'])} to {f3(OLS44['r2'])}. The whole of that gain comes from "
+    "feature engineering done with hindsight (Section 3.3). The transformer achieves it by learning from the raw "
+    "series which summaries of the past matter: trained on the region alone (v2.1, R² "
+    f"{f3(V21['r2'])}), it is already level with the engineered model (change correlation "
+    f"{V21['change_corr']:.3f} against {OLS44['change_corr']:.3f}, escalation AUC {V21['esc_auc']:.3f} against "
+    f"{OLS44['esc_auc']:.3f}), so a well-engineered classical model is matched without anyone having to engineer "
+    "it. That property is what allows the approach to carry over to new regions, actors or data sources, where no "
+    "tested feature set exists. Given more training data (Section 4.3), the release moves ahead of the engineered "
+    f"model (R² {f3(V22['r2'])} against {f3(OLS44['r2'])}, change correlation {V22['change_corr']:.3f} against "
+    f"{OLS44['change_corr']:.3f}, escalation AUC {V22['esc_auc']:.3f} against {OLS44['esc_auc']:.3f}, direction "
+    f"{pct(V22['dir_acc'])} against {pct(OLS44['dir_acc'])}), whereas the engineered features would have to be "
+    "redesigned to gain from it. Beyond this, the transformer's specific advantages appear where Section 4.4 "
     "locates them: in periods when shocks propagate across the system, and increasingly as training data grow. "
-    "Relative to the trailing 52-week mean it reduces "
-    f"squared error by {R['variance']['mse_reduction']:.1%} (v2.2: {-V22['mse_vs_52']:.1%}) and v2.1 is more "
-    f"accurate for {R['variance']['share_dyads_better']:.0%} of the 400 dyads. The trailing 52-week mean is a demanding "
-    "baseline: a smoothed quarterly target is largely persistent, and carrying a relationship's annual average "
-    "forward already explains 60% of test variance.")
+    f"Relative to the trailing 52-week mean the release reduces squared error by {A22['variance']['mse_reduction']:.1%} "
+    f"and is more accurate for {A22['variance']['share_dyads_better']:.0%} of the 400 dyads. The trailing 52-week "
+    "mean is a demanding baseline: a smoothed quarterly target is largely persistent, and carrying a relationship's "
+    "annual average forward already explains 60% of test variance.")
 table("Test-set performance (400 MENA dyads × 119 weeks, March 2024 – June 2026).",
       ["Forecast", "R²", "MAE", "Direction", "Change corr.", "Escalation AUC"],
       [["Trailing 13-week mean", f3(B["trailing 13-week mean"]["r2"]), f3(B["trailing 13-week mean"]["mae"]),
@@ -528,25 +528,33 @@ para(
     "covered.")
 
 doc.add_heading("4.5  What the cross-system attention learns", level=2)
-ext = R["attention"]["external_share"]
+att = A22["attention"]
+ext = att["external_share"]
+h1, h2 = att["selective_heads"]
+lift = lambda head, dyad: next(x["lift"] for x in att["received"][head] if x["dyad"] == dyad)
+head_name = lambda k: f"block {int(k[15]) + 1}, head {int(k[-1]) + 1}"
 para(
     "Attention weights are not explanations of a model's output (Jain and Wallace 2019), but they show where "
     "information flows. Averaged over heads, MENA forecasts spread attention across MENA–world dyads roughly in "
     f"proportion to their number ({min(ext.values()):.0%}–{max(ext.values()):.0%} of attention, against "
-    f"{R['attention']['uniform_external_share']:.0%} if uniform). Two heads, however, are sharply selective "
-    "(Figure 10). The most selective attends up to four times more than uniform to the United Kingdom, Germany "
-    "and the European Union in relation to Israel, the United States and United Kingdom in relation to Palestine, "
-    "and Russia in relation to Iran. The second concentrates on Spain, Ireland, Germany, Canada and the European "
-    "Union in relation to Israel; Spain and Ireland recognised Palestine in 2024 and were central to Israel's "
-    "diplomatic relations. Without being told which relationships matter, the model has learned to watch how "
-    "outside powers engage with the region's central conflict, which is precisely the systemic information that "
-    "row-by-row models cannot use.")
+    f"{att['uniform_external_share']:.0%} if uniform). Two heads, however, are sharply selective "
+    f"(Figure 10). The most selective ({head_name(h1)}) concentrates on a handful of relationships "
+    f"around the region's central conflict: Palestine → Israel receives {lift(h1, 'PSE-ISR'):.0f} times its uniform "
+    f"share, the United States → Israel {lift(h1, 'USA-ISR'):.0f} times, Israel → Palestine "
+    f"{lift(h1, 'ISR-PSE'):.0f} times, Israel's domestic dyad {lift(h1, 'ISR-ISR'):.0f} times and Israel → Egypt "
+    f"{lift(h1, 'ISR-EGY'):.0f} times, together with events GDELT attributes to Africa as a regional actor directed "
+    f"at Egypt (AFR → EGY, {lift(h1, 'AFR-EGY'):.0f} times). The second ({head_name(h2)}) spreads over Israel, the "
+    f"United States and Iran: Israel's domestic dyad ({lift(h2, 'ISR-ISR'):.1f} times uniform), the United States "
+    f"with Israel and with Iran, Israel–Palestine in both directions, and Russia with Iran. Without being told which "
+    "relationships matter, the model has learned to watch the region's central conflict and how outside powers "
+    "engage with it and with Iran, which is precisely the systemic information that row-by-row models cannot use.")
 figure("fig8_attention", "Dyads receiving the most attention from MENA forecasts in the two most selective "
-       "cross-system heads, as a multiple of uniform attention (test-period average). Blue: MENA–world dyads; "
-       "green: MENA–MENA dyads.", 15.5)
+       "cross-system heads of release v2.2 (seed 42), as a multiple of uniform attention (test-period average; note "
+       "the different scales). Blue: MENA–world dyads; green: MENA–MENA dyads. AFR: GDELT's code for Africa as a "
+       "regional actor.", 15.5)
 
 doc.add_heading("4.6  Where the model adds information", level=2)
-vv = R["variance"]
+vv = A22["variance"]
 ex = vv["example_reduction"]
 para(
     f"Most of the variation the model is scored on lies *between* dyads: {vv['between_share']:.0%} of test "
@@ -558,7 +566,7 @@ para(
     f"error), Israel → Palestine (−{ex['ISR-PSE']:.0%}) and Israel → Iran (−{ex['ISR-IRN']:.0%}), and is less "
     f"accurate for Saudi Arabia → Yemen (+{-ex['SAU-YEM']:.0%}), whose largest move in 2026 was an abrupt break. "
     "Anticipating such breaks a quarter ahead is the hardest part of the problem.")
-figure("fig7_examples", "Forecast versus outcome for four dyads over the test period (release v2.1). Titles give "
+figure("fig7_examples", "Forecast versus outcome for four dyads over the test period (release v2.2). Titles give "
        "the change in squared error relative to the trailing 52-week mean (negative = better).", 16)
 
 doc.add_heading("4.7  A second task: flagging conflict surges", level=2)
@@ -566,7 +574,7 @@ DIRN = FL["v2.0 direction model (4-week escalation probability)"]
 SURG = FL["v2.2 conflict-surge model"]
 NAIV = FL["Naive: last quarter's peak conflict"]
 LINF = FL["Linear regression, hand-built features*"]
-GOLD = FL["v2.1 Goldstein forecast (fall below normal)"]
+GOLD = FL["v2.2 Goldstein forecast (fall below normal)"]
 para(
     "Users of a risk product care less about how the average tone of a relationship will move than about "
     "whether it is heading into a crisis. An earlier companion model addressed this with a four-week direction "
@@ -591,7 +599,7 @@ para(
 para(
     f"Table 5 compares crisis flags on the test weeks shared by every model ({V22S['flag_weeks']} weeks). If each "
     f"week an analyst reviewed the ten dyads ranked highest, {SURG['conflict_surge']['top10']:.0%} of the surge "
-    f"model's alerts would be followed by a surge, against {GOLD['conflict_surge']['top10']:.0%} for the v2.1 "
+    f"model's alerts would be followed by a surge, against {GOLD['conflict_surge']['top10']:.0%} for the v2.2 "
     f"Goldstein forecast and {DIRN['conflict_surge']['top10']:.0%} for the direction model "
     f"(base rate {V22S['surge_rate']:.0%}). Simple benchmarks are competitive on this target: conflict peaks are "
     f"persistent, so last quarter's peak already scores AUC {NAIV['conflict_surge']['auc']:.3f}, and a linear "
@@ -602,15 +610,16 @@ para(
     "target is the natural next candidate for that. The surge model also departs from the normal more readily "
     "than the average-Goldstein forecast (Figure 12): for Israel → Palestine its forecast of the coming "
     f"peak correlates {V22S['isr_pse']['ISR-PSE']['surge_corr']:.2f} with the actual change and moves "
-    f"{V22S['isr_pse']['ISR-PSE']['surge_amp']:.0%} as much as reality, whereas the v2.1 forecast of average "
+    f"{V22S['isr_pse']['ISR-PSE']['surge_amp']:.0%} as much as reality, whereas the v2.2 forecast of average "
     f"Goldstein stays close to its normal ({V22S['isr_pse']['ISR-PSE']['gold_amp']:.0%}). Both still miss the "
     "sustained easing of 2025–2026, which a quarter-ahead model cannot see coming. Each target flags "
     "its own kind of crisis: the surge model is weaker on falls in average Goldstein "
-    f"(AUC {SURG['gold_crisis']['auc']:.3f} against {GOLD['gold_crisis']['auc']:.3f} for v2.1), so the two "
+    f"(AUC {SURG['gold_crisis']['auc']:.3f} against {GOLD['gold_crisis']['auc']:.3f} for the v2.2 Goldstein forecast), so the two "
     "models are complementary, and the release runs both.")
 para(
     "Three alternatives did not improve on this. Forecasting the worst month of *average* Goldstein flagged "
-    "Goldstein crises slightly better than v2.1 but did not track conflict; a single network trained on both "
+    "Goldstein crises slightly better than the average-Goldstein forecast it was tested against but did not track "
+    "conflict; a single network trained on both "
     "targets did both jobs slightly worse than two separate models; and the world training data that improves "
     "v2.2 left the surge model's ranking unchanged. The surge target is a rare, noisy quantity, and like the "
     "main model it is likely to benefit most from a larger, global training set.")
@@ -624,7 +633,7 @@ table("Crisis flags on the shared test weeks (400 MENA dyads). AUC ranks all dya
            "(the next quarter's worst four-week mean Goldstein falls below the dyad's typical quarterly low by more "
            "than the worst tenth of historical gaps). *Hand-built features as in Table 2, plus conflict-intensity "
            "history; fit on training weeks.")
-figure("fig14_surge_isr", "Israel → Palestine on the test weeks. (a) The v2.1 forecast of mean Goldstein stays near "
+figure("fig14_surge_isr", "Israel → Palestine on the test weeks. (a) The v2.2 forecast of mean Goldstein stays near "
        "the dyad's normal. (b) The surge model's forecast of the coming quarter's peak conflict intensity departs "
        "from its normal more often, but also misses the sustained decline. Forecasts are plotted at the week they "
        "are made.", 16)
@@ -771,7 +780,7 @@ para("As a prototype, the model has limitations that define its current scope an
      "Section 7.")
 para("**Data volume.** The model is trained on 391 weeks of the regional system, and Section 4.3 showed it is "
      "limited by the number of training examples rather than by input richness. Seeds vary "
-     f"({min(R['v21_seed_r2']):.3f}–{max(R['v21_seed_r2']):.3f} test R² for v2.1), which is why the release "
+     f"({min(V22['seed_r2']):.3f}–{max(V22['seed_r2']):.3f} test R² across the five v2.2 seeds), which is why the release "
      "averages five.")
 para("**Regime shifts.** System-level patterns learned from 2015–2022 transferred well to 2023 but not to the "
      "2024–2026 configuration of direct Israel–Iran exchanges and a wider Red Sea conflict. A model can only "
