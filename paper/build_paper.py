@@ -1528,6 +1528,8 @@ for ref in [
 
 assert fig_no[0] == len(FIGS) and tab_no[0] == len(TABS), (fig_no[0], tab_no[0])
 import sys  # noqa: E402
+_text = "\n".join(p.text for p in doc.paragraphs) + "\n".join(c.text for t in doc.tables for r in t.rows for c in r.cells)
+assert not re.findall(r"\{[A-Za-z_][^{}\s,]*\}", _text), "unfilled f-string placeholders in the text"
 out = sys.argv[1] if len(sys.argv) > 1 else f"{P}/risk_paper.docx"
 doc.save(out)
 print("saved", out, "| figures:", fig_no[0], "| tables:", tab_no[0])
