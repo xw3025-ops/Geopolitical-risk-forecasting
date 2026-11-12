@@ -165,29 +165,35 @@ def acled_token(email, password):
     return r.json()["access_token"]
 
 
+def acled_read(token, country_name, start, end, fields, page_size=5000):
+    """All rows of an ACLED read query for one country between start and end (dates, inclusive).
+    ACLED pages with a cursor (since November 2026 the `page` parameter is rejected): the first request has no
+    cursor, each response returns `next_cursor`, which is passed back as `cursor` until it is empty."""
+    rows, cursor, seen = [], None, set()
+    while True:
+        params = {"_format": "json", "country": country_name, "event_date": f"{start}|{end}",
+                  "event_date_where": "BETWEEN", "fields": fields, "limit": page_size}
+        if cursor is not None:
+            params["cursor"] = cursor
+        r = requests.get(ACLED_READ_URL, headers={"Authorization": f"Bearer {token}"}, timeout=300, params=params)
+        r.raise_for_status()
+        body = r.json()
+        data = body.get("data") or []
+        rows += data
+        cursor = body.get("next_cursor")
+        if not data or len(data) < page_size or cursor in (None, "") or cursor in seen:
+            break
+        seen.add(cursor)
+        time.sleep(0.5)
+    return rows
+
+
 def acled_events(token, country_name, start, end, page_size=5000):
     """All ACLED events in one country between start and end (dates, inclusive)."""
-    frames, page = [], 1
-    while True:
-        r = requests.get(ACLED_READ_URL, headers={"Authorization": f"Bearer {token}"}, timeout=300, params={
-            "_format": "json", "country": country_name,
-            "event_date": f"{start}|{end}", "event_date_where": "BETWEEN",
-            "fields": "event_id_cnty|event_date|event_type|fatalities",
-            "limit": page_size, "page": page})
-        r.raise_for_status()
-        data = r.json().get("data", [])
-        if not data:
-            break
-        frames.append(pd.DataFrame(data))
-        if len(data) < page_size:
-            break
-        if page > 1 and frames[-1].event_id_cnty.iloc[0] == frames[-2].event_id_cnty.iloc[0]:
-            raise RuntimeError("ACLED pagination returned the same page twice - check the 'page' parameter")
-        page += 1
-        time.sleep(0.5)
-    if not frames:
+    rows = acled_read(token, country_name, start, end, "event_id_cnty|event_date|event_type|fatalities", page_size)
+    if not rows:
         return pd.DataFrame(columns=["event_id_cnty", "event_date", "event_type", "fatalities"])
-    return pd.concat(frames, ignore_index=True).drop_duplicates("event_id_cnty")
+    return pd.DataFrame(rows).drop_duplicates("event_id_cnty")
 
 
 def acled_country_weeks(email, password, start, end):

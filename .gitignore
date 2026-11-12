@@ -19,3 +19,6 @@ logs/
 artifacts/experiments/
 models/v2.0/
 data/news_cache/
+
+# release archives (release/build_release.py)
+dist/

@@ -259,3 +259,28 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .page { padding: 20px 18px; }
 }
 @media (prefers-reduced-motion: reduce) { .lamp.pulse { animation: none; } }
+
+/* ---- "refresh paused" alert (SITE_CONFIG.frozen) ---- */
+.paused { position: relative; }
+.paused[hidden] { display: none; }
+.alert-btn { font: inherit; font-size: 12px; cursor: pointer; color: #ffc46b; border-color: rgba(255, 176, 64, 0.45); background: rgba(255, 166, 48, 0.12); }
+.alert-btn svg { filter: drop-shadow(0 0 4px rgba(255, 170, 60, 0.75)); animation: alertPulse 2.4s ease-in-out infinite; }
+@keyframes alertPulse { 50% { filter: drop-shadow(0 0 9px rgba(255, 170, 60, 0.95)); } }
+.paused-pop.glass { background: rgba(22, 24, 28, 0.97); }
+.paused-pop { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 400px; max-width: calc(100vw - 32px); padding: 16px 16px 14px; z-index: 80; font-size: 12.5px; line-height: 1.6; color: var(--ink); cursor: default; }
+.paused-pop::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }  /* keeps the hover while moving into the card */
+.paused:hover .paused-pop, .paused:focus-within .paused-pop, .paused.open .paused-pop { display: block; }
+.pp-h { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #ffc46b; margin-bottom: 6px; }
+.paused-pop p { margin: 0 0 12px; color: var(--ink-2, #d6d8db); }
+.paused-pop p a { color: var(--fc-a); text-decoration: none; }
+.paused-pop p a:hover { text-decoration: underline; }
+.ncards { display: grid; gap: 8px; }
+.ncard { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--hair); color: var(--ink); text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+.ncard:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+.ncard .av { position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: linear-gradient(135deg, var(--fc-a), var(--fc-b)); color: #0d1016; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; }
+.ncard .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ncard .who { display: flex; flex-direction: column; min-width: 0; }
+.ncard .who b { font-size: 13px; font-weight: 600; }
+.ncard .who small { color: var(--muted); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; }
+.ncard .li { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2, #d6d8db); padding: 4px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+@media (max-width: 760px) { .alert-btn span { display: none; } }

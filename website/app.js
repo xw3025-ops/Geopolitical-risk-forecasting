@@ -22,7 +22,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 // ------------------------------------------------------------ language
 const T = {
   en: {
-    title: "MENA Risk Monitor", asof: (w) => `Forecasts as of the week of ${w}`, updated: (d) => `Updated ${d}`, about: "Data & model",
+    title: "MENA Risk Monitor", asof: (w) => `Forecasts as of the week of ${w}`, updated: (d) => `Updated ${d}`, snapshot: (d) => `Snapshot ${d}`, about: "Data & model",
     export: "Export", fcTag: "Forecast-based", next13: "next 13 weeks", overview: "← Overview", of20: (r) => `#${r} of 20`,
     bands: { Severe: "Severe", High: "High", Elevated: "Elevated", Low: "Low" }, risk: "risk",
     regional: "Regional risk", sinceLast: "since the last refresh", alertsAhead: "surge alerts ahead", deaths4w: "conflict deaths, last 4 weeks",
@@ -45,7 +45,7 @@ const T = {
     chinaCard: "China exposure", atRisk: "What could be at risk for Chinese entities", sources: "Sources",
   },
   zh: {
-    title: "中东北非风险监测", asof: (w) => `预测基准周：${w}`, updated: (d) => `更新于 ${d}`, about: "数据与模型",
+    title: "中东北非风险监测", asof: (w) => `预测基准周：${w}`, updated: (d) => `更新于 ${d}`, snapshot: (d) => `快照 ${d}`, about: "数据与模型",
     export: "导出", fcTag: "基于预测", next13: "未来13周", overview: "← 总览", of20: (r) => `20国中第${r}位`,
     bands: { Severe: "严重", High: "高", Elevated: "偏高", Low: "低" }, risk: "风险",
     regional: "区域风险", sinceLast: "较上期", alertsAhead: "项冲突激增预警", deaths4w: "过去四周冲突死亡人数",
@@ -199,7 +199,10 @@ function chrome() {
   $("#sub").textContent = t("asof")(m.as_of_week);
   const gen = new Date(m.generated_utc);
   const stale = (Date.now() - gen.getTime()) / 864e5 > 16;
-  $("#status").innerHTML = `${lamp(stale ? "orange" : "ok", !stale)}${t("updated")(gen.toISOString().slice(0, 10))}`;
+  $("#status").innerHTML = CFG.frozen
+    ? `${lamp("orange")}${t("snapshot")(gen.toISOString().slice(0, 10))}`
+    : `${lamp(stale ? "orange" : "ok", !stale)}${t("updated")(gen.toISOString().slice(0, 10))}`;
+  pausedNotice(gen);
   $("#fclegend").innerHTML = fcTag();
   $("#nav-about").textContent = t("about");
   $("#export-btn").textContent = t("export");
@@ -217,6 +220,42 @@ function chrome() {
     $("#export-btn").addEventListener("click", (ev) => { ev.stopPropagation(); $("#export").classList.toggle("open"); });
     document.addEventListener("click", () => $("#export").classList.remove("open"));
     $("#export-drop").addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) exportData(b.dataset.x); });
+  }
+}
+
+// "refresh paused" alert in the top bar (CFG.frozen): message and the developers' name cards
+const ALERT_ICON = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3.2 22 20.5H2L12 3.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9.5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="currentColor"/></svg>`;
+const LINKEDIN_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0a66c2"/><path fill="#fff" d="M7.1 9.6h-2.6v8.3h2.6V9.6zM5.8 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM19.5 13.4c0-2.3-1.2-4-3.6-4-1.2 0-2 .6-2.4 1.3V9.6h-2.5v8.3h2.6v-4.3c0-1.1.3-2.1 1.6-2.1s1.6 1.2 1.6 2.2v4.2h2.7v-4.5z"/></svg>`;
+
+function pausedNotice(gen) {
+  const el = $("#paused");
+  if (!CFG.frozen) { el.hidden = true; return; }
+  el.hidden = false;
+  const zh = S.lang === "zh";
+  const day = zh ? `${gen.getUTCFullYear()}年${gen.getUTCMonth() + 1}月${gen.getUTCDate()}日`
+    : gen.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  const people = CFG.contacts || [];
+  const mail = (p) => `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>`;
+  const names = people.map((p) => `<b>${esc(p.name)}</b> ${zh ? "（" : "at "}${mail(p)}${zh ? "）" : ""}`).join(zh ? "与" : " and ");
+  const msg = zh
+    ? `本原型的数据更新已由开发者暂停，原因是本阶段开发目标已顺利完成。您看到的是截至${day}的快照。如需了解项目详情，欢迎联系${names}，期待与您交流！`
+    : `The refresh of this prototype has been paused by the developers due to successful completion of the objectives of this development stage - you are seeing a snapshot as of ${day}. For any inquiries on the details of this project, please do not hesitate to contact ${names} - we are happy to connect!`;
+  const initials = (n) => n.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const card = (p) => `<a class="ncard" href="${esc(p.linkedin)}" target="_blank" rel="noopener">
+      <span class="av"><span>${esc(initials(p.name))}</span>${p.photo ? `<img src="${esc(p.photo)}" alt="" onerror="this.remove()">` : ""}</span>
+      <span class="who"><b>${esc(p.name)}</b><small>${esc(p.email)}</small></span>
+      <span class="li">${LINKEDIN_ICON}LinkedIn</span></a>`;
+  el.innerHTML = `<button class="pill alert-btn" type="button" aria-label="${zh ? "更新已暂停" : "Refresh paused"}">${ALERT_ICON}<span>${zh ? "已暂停更新" : "Refresh paused"}</span></button>
+    <div class="paused-pop glass" role="dialog">
+      <div class="pp-h">${ALERT_ICON}${zh ? "数据更新已暂停" : "Refresh paused"}</div>
+      <p>${msg}</p>
+      <div class="ncards">${people.map(card).join("")}</div>
+    </div>`;
+  if (!pausedNotice.wired) {  // tap to open on touch screens; click elsewhere closes
+    pausedNotice.wired = true;
+    el.addEventListener("click", (ev) => { if (ev.target.closest(".alert-btn")) { ev.stopPropagation(); el.classList.toggle("open"); } });
+    document.addEventListener("click", (ev) => { if (!el.contains(ev.target)) el.classList.remove("open"); });
+    if (new URLSearchParams(location.search).has("alert")) el.classList.add("open");  // preview helper
   }
 }
 

@@ -57,7 +57,7 @@ import requests
 
 import live_pipeline as lp
 from honest_common import MENA, panel_from_df, trailing_mean
-from risk_index import ACLED_COUNTRY, ACLED_READ_URL, acled_token
+from risk_index import ACLED_COUNTRY, acled_read, acled_token
 
 OUT = "website/data/latest.json"
 IMF_RAW = "data/imf_imts/imts_raw.csv"
@@ -226,18 +226,7 @@ def acled_recent(end):
     start = end - timedelta(days=ACLED_DAYS - 1)
     out, latest = {}, None
     for iso, name in ACLED_COUNTRY.items():
-        rows, page = [], 1
-        while True:
-            r = requests.get(ACLED_READ_URL, headers={"Authorization": f"Bearer {token}"}, timeout=300, params={
-                "_format": "json", "country": name, "event_date": f"{start}|{end}",
-                "event_date_where": "BETWEEN", "fields": ACLED_FIELDS, "limit": 5000, "page": page})
-            r.raise_for_status()
-            data = r.json().get("data", [])
-            rows += data
-            if len(data) < 5000:
-                break
-            page += 1
-            time.sleep(0.5)
+        rows = acled_read(token, name, start, end, ACLED_FIELDS)
         ev = []
         for e in rows:
             try:
